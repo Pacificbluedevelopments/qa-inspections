@@ -1203,6 +1203,39 @@ let pcSigs = { owner: null, contractor: null };
 let sigDrawing = {};
 let sigCtx = {};
 
+
+async function loadPCCertificates() {
+  const list = document.getElementById('pc-list');
+  if (!list) return;
+  list.innerHTML = '<div class="loading"><div class="spinner"></div>Loading…</div>';
+  try {
+    const snap = await db.collection('jobs').doc(currentJob.id).collection('pc-certificates').get();
+    if (snap.empty) {
+      list.innerHTML = '<div style="font-size:13px;color:#9A9690;padding:8px 0;">No PC certificates yet.</div>';
+      return;
+    }
+    const certs = [];
+    snap.forEach(d => certs.push({ id:d.id, ...d.data() }));
+    certs.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+    list.innerHTML = '';
+    certs.forEach(cert => {
+      const div = document.createElement('div');
+      div.className = 'insp-item';
+      div.innerHTML = '<div class="insp-header"><div class="insp-type">PC Certificate</div><span class="insp-badge pass">Complete</span></div>' +
+        '<div class="insp-meta">' + (cert.date||'') + ' · ' + (cert.owner||'') + '</div>';
+      div.onclick = function() { openPCCertificate(cert); };
+      list.appendChild(div);
+    });
+  } catch(e) {
+    list.innerHTML = '<div style="font-size:13px;color:#9A9690;">Error: ' + e.message + '</div>';
+  }
+}
+
+function openPCCertificate(cert) {
+  const url = 'https://pacificbluedevelopments.github.io/qa-inspections/pc.html?job=' + currentJob.id + '&cert=' + cert.id;
+  window.open(url, '_blank');
+}
+
 function openPCSetup() {
   // Pre-fill from job
   document.getElementById('pc-owner').value = currentJob.client || '';
