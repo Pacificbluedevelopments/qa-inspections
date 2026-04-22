@@ -119,6 +119,23 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
 .action-card p{font-size:12px;color:#5C5A57;margin-bottom:14px;line-height:1.6;}
 
 
+
+/* PC CERTIFICATE */
+.sig-pad-wrap{background:#F7F6F4;border:1.5px solid #E4E0DA;border-radius:10px;padding:12px;margin-bottom:12px;}
+.sig-pad-label{font-size:11px;font-weight:600;color:#9A9690;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;display:block;}
+.sig-canvas{width:100%;height:140px;background:#fff;border-radius:8px;border:1.5px solid #E4E0DA;display:block;touch-action:none;}
+.sig-actions{display:flex;gap:8px;margin-top:8px;}
+.sig-clear{padding:7px 14px;background:transparent;border:1px solid #E4E0DA;border-radius:7px;font-size:12px;color:#9A9690;cursor:pointer;font-family:'Poppins',sans-serif;}
+.sig-done{padding:7px 14px;background:#333F48;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;}
+.sig-preview{width:100%;height:80px;object-fit:contain;border-radius:8px;border:1.5px solid #4A7C4A;background:#E8F0E8;display:none;}
+.pc-item{background:#fff;border-bottom:1px solid #E4E0DA;padding:14px 16px;}
+.pc-item-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.pc-trade{font-size:12px;font-weight:700;color:#B7B09C;text-transform:uppercase;letter-spacing:.06em;}
+.pc-badge-row{display:flex;gap:8px;margin-bottom:10px;}
+.pc-badge-btn{flex:1;padding:11px 4px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #E4E0DA;background:#F7F6F4;color:#9A9690;text-align:center;}
+.pc-badge-btn.sel-defect{background:#F5E8E5;border-color:#A84232;color:#6B2318;}
+.pc-badge-btn.sel-omission{background:#FFF3E0;border-color:#E07800;color:#7A4000;}
+
 /* DEFECTS */
 .defect-item{background:#fff;border-radius:10px;border:1px solid #E4E0DA;padding:14px 16px;margin-bottom:10px;border-left:4px solid transparent;cursor:pointer;}
 .defect-item.open{border-left-color:#A84232;}
@@ -269,6 +286,7 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
     <div class="card" id="jd-meta" style="margin-bottom:20px;"></div>
     <button class="primary-btn" onclick="startNewInspection()">+ New inspection</button>
     <button class="secondary-btn" onclick="openDefectsScreen()" id="defects-btn">Defects</button>
+    <button class="ghost-btn" onclick="openPCSetup()" style="border-color:#B7B09C;color:#B7B09C;">PC Certificate</button>
     <div style="font-size:11px;font-weight:700;color:#9A9690;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Previous inspections</div>
     <div id="inspections-list"><div class="loading"><div class="spinner"></div>Loading…</div></div>
   </div>
@@ -405,6 +423,86 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
       <button class="modal-cancel" onclick="closeModal('modal-rectify')">Cancel</button>
       <button class="modal-save" onclick="saveRectification()">Confirm rectified</button>
     </div>
+  </div>
+</div>
+
+
+<!-- PC SETUP SCREEN -->
+<div id="screen-pc-setup" class="screen">
+  <div class="bar">
+    <div class="bar-row">
+      <div><div class="bar-label">Pacific Blue</div><div class="bar-title">PC Certificate</div></div>
+      <button class="bar-btn" onclick="showScreen('screen-job-detail')">Cancel</button>
+    </div>
+  </div>
+  <div class="body">
+    <div class="card">
+      <div class="card-h">Certificate details</div>
+      <div class="field"><label>Date of practical completion</label><input id="pc-date" type="date"></div>
+      <div class="field"><label>Owner / Client name</label><input id="pc-owner" type="text" placeholder="Full legal name"></div>
+      <div class="field"><label>Supervisor conducting inspection</label><input id="pc-supervisor" type="text" placeholder="e.g. Brett K"></div>
+    </div>
+    <div style="background:#F0EDE8;border-radius:10px;padding:14px 16px;margin-bottom:12px;font-size:12px;color:#5C5A57;line-height:1.65;border:1px solid #DDD9D2;">
+      <div style="font-size:11px;font-weight:700;color:#B7B09C;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Disclaimer</div>
+      The Owner has inspected the site and acknowledges that the Contractor has duly performed the contract to the Owner's satisfaction, and agrees that the works have reached Practical Completion and are in good order except for the items listed in this certificate.
+    </div>
+    <button class="primary-btn" onclick="startPCInspection()">Begin PC inspection</button>
+    <button class="ghost-btn" onclick="showScreen('screen-job-detail')">Cancel</button>
+  </div>
+</div>
+
+<!-- PC CHECKLIST SCREEN -->
+<div id="screen-pc-check" class="screen">
+  <div class="bar">
+    <div class="bar-row">
+      <div><div class="bar-label">Pacific Blue</div><div class="bar-title">PC Certificate</div></div>
+      <button class="bar-btn" onclick="goToPCSignatures()">Finish ›</button>
+    </div>
+  </div>
+  <div id="pc-part1-header" style="background:#333F48;color:#fff;padding:9px 16px;font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;">Part 1 — Agreed defects & omissions</div>
+  <div id="pc-items-body"></div>
+  <div style="padding:16px;background:#F7F6F4;border-top:1px solid #E4E0DA;">
+    <button class="ghost-btn" onclick="addPCItem('part1')" style="margin-bottom:8px;">+ Add Part 1 item</button>
+    <div id="pc-part2-header" style="background:#5C5A57;color:#fff;padding:9px 16px;font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;border-radius:8px;text-align:center;margin-bottom:8px;">Part 2 — Disputed items</div>
+    <div id="pc-items-part2"></div>
+    <button class="ghost-btn" onclick="addPCItem('part2')">+ Add Part 2 item</button>
+  </div>
+</div>
+
+<!-- PC SIGNATURES SCREEN -->
+<div id="screen-pc-signatures" class="screen">
+  <div class="bar">
+    <div class="bar-row">
+      <div><div class="bar-label">Pacific Blue</div><div class="bar-title">Signatures</div></div>
+      <button class="bar-btn" onclick="showScreen('screen-pc-check')">‹ Back</button>
+    </div>
+  </div>
+  <div class="body">
+    <div style="font-size:14px;font-weight:600;color:#333F48;margin-bottom:4px;">Capture signatures</div>
+    <div style="font-size:12px;color:#9A9690;margin-bottom:20px;">Both parties must sign before the certificate is completed.</div>
+
+    <div class="sig-pad-wrap">
+      <span class="sig-pad-label">Owner signature — <span id="sig-owner-name"></span></span>
+      <canvas id="sig-canvas-owner" class="sig-canvas"></canvas>
+      <img id="sig-preview-owner" class="sig-preview">
+      <div class="sig-actions">
+        <button class="sig-clear" onclick="clearSig('owner')">Clear</button>
+        <button class="sig-done" onclick="captureSig('owner')">Capture ✓</button>
+      </div>
+    </div>
+
+    <div class="sig-pad-wrap">
+      <span class="sig-pad-label">Contractor signature — Pacific Blue Developments Pty Ltd</span>
+      <canvas id="sig-canvas-contractor" class="sig-canvas"></canvas>
+      <img id="sig-preview-contractor" class="sig-preview">
+      <div class="sig-actions">
+        <button class="sig-clear" onclick="clearSig('contractor')">Clear</button>
+        <button class="sig-done" onclick="captureSig('contractor')">Capture ✓</button>
+      </div>
+    </div>
+
+    <button class="primary-btn" onclick="completePCCertificate()">Complete &amp; send report</button>
+    <button class="ghost-btn" onclick="showScreen('screen-pc-check')">‹ Back to items</button>
   </div>
 </div>
 
@@ -1093,6 +1191,252 @@ async function generateEmail() {
 }
 
 
+
+// ── PC CERTIFICATE ────────────────────────────────────────────────────────
+let pcData = {};
+let pcItems = { part1: [], part2: [] };
+let pcPhotos = {};
+let pcSigs = { owner: null, contractor: null };
+let sigDrawing = {};
+let sigCtx = {};
+
+function openPCSetup() {
+  // Pre-fill from job
+  document.getElementById('pc-owner').value = currentJob.client || '';
+  document.getElementById('pc-supervisor').value = '';
+  // Default date to today
+  const today = new Date();
+  document.getElementById('pc-date').value = today.toISOString().split('T')[0];
+  showScreen('screen-pc-setup');
+}
+
+function startPCInspection() {
+  const dateVal = document.getElementById('pc-date').value;
+  if (!dateVal) { showToast('Please select a date'); return; }
+  pcData = {
+    date: new Date(dateVal).toLocaleDateString('en-AU',{day:'2-digit',month:'long',year:'numeric'}),
+    owner: document.getElementById('pc-owner').value || currentJob.client || 'Not specified',
+    supervisor: document.getElementById('pc-supervisor').value || 'Not specified',
+    jobAddress: currentJob.address,
+    jobNumber: currentJob.jobNumber,
+  };
+  pcItems = { part1: [], part2: [] };
+  pcPhotos = {};
+  pcSigs = { owner: null, contractor: null };
+  document.getElementById('pc-items-body').innerHTML = '';
+  document.getElementById('pc-items-part2').innerHTML = '';
+  showScreen('screen-pc-check');
+}
+
+let pcItemCounter = 0;
+
+function addPCItem(part) {
+  pcItemCounter++;
+  const id = 'pc-' + part + '-' + pcItemCounter;
+  const container = part === 'part1' ? document.getElementById('pc-items-body') : document.getElementById('pc-items-part2');
+  const div = document.createElement('div');
+  div.className = 'pc-item'; div.id = 'pcitem-' + id;
+  div.innerHTML = `
+    <div class="pc-item-header">
+      <input type="text" id="pctrade-${id}" placeholder="Trade (e.g. Painters)" style="font-size:11px;font-weight:700;color:#B7B09C;text-transform:uppercase;letter-spacing:.06em;border:none;background:transparent;outline:none;font-family:'Poppins',sans-serif;width:60%;" oninput="updatePCItem('${id}','${part}')">
+      <button onclick="removePCItem('${id}','${part}')" style="background:none;border:none;color:#E4E0DA;font-size:18px;cursor:pointer;padding:0;">×</button>
+    </div>
+    <textarea id="pcdesc-${id}" placeholder="Describe the defect or omission…" style="width:100%;padding:10px 12px;font-size:13px;border:1.5px solid #E4E0DA;border-radius:8px;background:#F7F6F4;color:#1A1F24;outline:none;resize:none;min-height:64px;line-height:1.5;margin-bottom:10px;font-family:'Poppins',sans-serif;" oninput="updatePCItem('${id}','${part}')"></textarea>
+    <div class="pc-badge-row">
+      <button class="pc-badge-btn" id="pcbadge-defect-${id}" onclick="setPCBadge('${id}','${part}','defect')">Minor Defect</button>
+      <button class="pc-badge-btn" id="pcbadge-omission-${id}" onclick="setPCBadge('${id}','${part}','omission')">Minor Omission</button>
+    </div>
+    ${part === 'part1' ? `
+    <div style="margin-bottom:10px;">
+      <label style="display:block;font-size:11px;font-weight:600;color:#9A9690;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;">Date of rectification</label>
+      <input type="date" id="pcrect-${id}" style="width:100%;padding:10px 12px;font-size:14px;border:1.5px solid #E4E0DA;border-radius:8px;background:#F7F6F4;color:#1A1F24;outline:none;font-family:'Poppins',sans-serif;" onchange="updatePCItem('${id}','${part}')">
+    </div>` : ''}
+    <label style="display:block;font-size:11px;font-weight:600;color:#9A9690;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;">Photos</label>
+    <div class="photos-row" id="pcphotos-${id}"></div>
+    <label class="photo-label-btn">📷 Add photo<input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="handlePCPhoto('${id}',this)"></label>
+  `;
+  container.appendChild(div);
+  // Add to data
+  const arr = pcItems[part];
+  arr.push({ id, trade:'', desc:'', badge:'', rectDate:'', photos:[] });
+}
+
+function updatePCItem(id, part) {
+  const arr = pcItems[part];
+  const item = arr.find(i => i.id === id);
+  if (!item) return;
+  item.trade = document.getElementById('pctrade-'+id)?.value || '';
+  item.desc = document.getElementById('pcdesc-'+id)?.value || '';
+  const rectEl = document.getElementById('pcrect-'+id);
+  if (rectEl) item.rectDate = rectEl.value ? new Date(rectEl.value).toLocaleDateString('en-AU',{day:'2-digit',month:'short',year:'numeric'}) : '';
+}
+
+function setPCBadge(id, part, type) {
+  document.getElementById('pcbadge-defect-'+id).className = 'pc-badge-btn' + (type==='defect'?' sel-defect':'');
+  document.getElementById('pcbadge-omission-'+id).className = 'pc-badge-btn' + (type==='omission'?' sel-omission':'');
+  const arr = pcItems[part];
+  const item = arr.find(i => i.id === id);
+  if (item) item.badge = type;
+}
+
+function removePCItem(id, part) {
+  pcItems[part] = pcItems[part].filter(i => i.id !== id);
+  const el = document.getElementById('pcitem-'+id);
+  if (el) el.remove();
+}
+
+async function handlePCPhoto(id, input) {
+  if (!pcPhotos[id]) pcPhotos[id] = [];
+  const row = document.getElementById('pcphotos-'+id);
+  for (const file of Array.from(input.files)) {
+    const compressed = await compressImage(file);
+    const idx = pcPhotos[id].length;
+    pcPhotos[id].push(compressed);
+    const wrap = document.createElement('div');
+    wrap.className = 'thumb-wrap';
+    wrap.innerHTML = `<img class="thumb" src="${compressed}"><button class="thumb-del" onclick="removePCPhoto('${id}',${idx},this.parentNode)">×</button>`;
+    row.appendChild(wrap);
+  }
+  input.value = '';
+}
+
+function removePCPhoto(id, idx, wrap) {
+  if (pcPhotos[id]) pcPhotos[id][idx] = null;
+  wrap.remove();
+}
+
+function goToPCSignatures() {
+  document.getElementById('sig-owner-name').textContent = pcData.owner;
+  showScreen('screen-pc-signatures');
+  setTimeout(() => {
+    initSigPad('owner');
+    initSigPad('contractor');
+  }, 100);
+}
+
+function initSigPad(which) {
+  const canvas = document.getElementById('sig-canvas-'+which);
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+  ctx.strokeStyle = '#1A1F24';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  sigCtx[which] = ctx;
+  sigDrawing[which] = false;
+
+  const getPos = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches ? e.touches[0] : e;
+    return { x: (touch.clientX - rect.left) * (canvas.width / rect.width), y: (touch.clientY - rect.top) * (canvas.height / rect.height) };
+  };
+
+  canvas.onmousedown = canvas.ontouchstart = (e) => { e.preventDefault(); sigDrawing[which]=true; const p=getPos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); };
+  canvas.onmousemove = canvas.ontouchmove = (e) => { e.preventDefault(); if(!sigDrawing[which]) return; const p=getPos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); };
+  canvas.onmouseup = canvas.ontouchend = (e) => { e.preventDefault(); sigDrawing[which]=false; };
+}
+
+function clearSig(which) {
+  const canvas = document.getElementById('sig-canvas-'+which);
+  sigCtx[which].clearRect(0, 0, canvas.width, canvas.height);
+  pcSigs[which] = null;
+  const preview = document.getElementById('sig-preview-'+which);
+  preview.style.display = 'none';
+  canvas.style.display = 'block';
+}
+
+function captureSig(which) {
+  const canvas = document.getElementById('sig-canvas-'+which);
+  pcSigs[which] = canvas.toDataURL('image/png');
+  const preview = document.getElementById('sig-preview-'+which);
+  preview.src = pcSigs[which];
+  preview.style.display = 'block';
+  canvas.style.display = 'none';
+  showToast('Signature captured ✓');
+}
+
+async function completePCCertificate() {
+  if (!pcSigs.owner) { showToast('Please capture the owner signature'); return; }
+  if (!pcSigs.contractor) { showToast('Please capture the contractor signature'); return; }
+
+  showToast('Saving certificate…');
+
+  // Upload photos to Storage
+  const uploadedPhotos = {};
+  for (const [id, photoArr] of Object.entries(pcPhotos)) {
+    if (!photoArr) continue;
+    uploadedPhotos[id] = [];
+    for (const dataUrl of photoArr.filter(Boolean)) {
+      try {
+        const path = 'pc/' + currentJob.id + '/' + Date.now() + '.jpg';
+        const ref = storage.ref(path);
+        await ref.putString(dataUrl, 'data_url');
+        const url = await ref.getDownloadURL();
+        uploadedPhotos[id].push(url);
+      } catch(e) { uploadedPhotos[id].push(dataUrl); }
+    }
+  }
+
+  // Upload signatures
+  let ownerSigURL = pcSigs.owner;
+  let contractorSigURL = pcSigs.contractor;
+  try {
+    const ownerRef = storage.ref('pc/' + currentJob.id + '/sig_owner_' + Date.now() + '.png');
+    await ownerRef.putString(pcSigs.owner, 'data_url');
+    ownerSigURL = await ownerRef.getDownloadURL();
+    const contractorRef = storage.ref('pc/' + currentJob.id + '/sig_contractor_' + Date.now() + '.png');
+    await contractorRef.putString(pcSigs.contractor, 'data_url');
+    contractorSigURL = await contractorRef.getDownloadURL();
+  } catch(e) {}
+
+  // Sync photo URLs into items
+  [...pcItems.part1, ...pcItems.part2].forEach(item => {
+    item.photos = (uploadedPhotos[item.id] || pcPhotos[item.id] || []).filter(Boolean);
+  });
+
+  const certData = {
+    ...pcData,
+    part1: pcItems.part1,
+    part2: pcItems.part2,
+    ownerSigURL,
+    contractorSigURL,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    createdBy: currentUser?.email || 'Unknown',
+  };
+
+  try {
+    const ref = await db.collection('jobs').doc(currentJob.id).collection('pc-certificates').add(certData);
+    showToast('Certificate saved ✓');
+    // Generate email
+    await sendPCEmail(ref.id, certData);
+  } catch(e) { showToast('Error saving: ' + e.message); }
+}
+
+async function sendPCEmail(certId, cert) {
+  const reportUrl = 'https://pacificbluedevelopments.github.io/qa-inspections/pc.html?job=' + currentJob.id + '&cert=' + certId;
+  const subj = encodeURIComponent('PC Certificate – ' + currentJob.address + ' – ' + cert.date);
+  let body = 'Please find the Practical Completion Certificate for ' + currentJob.address + ' via the link below.
+
+';
+  body += 'View PC Certificate Here:
+' + reportUrl + '
+
+';
+  body += 'Job: ' + currentJob.address + '
+';
+  body += 'Date of Practical Completion: ' + cert.date + '
+';
+  body += 'Owner: ' + cert.owner + '
+
+';
+  body += 'Pacific Blue';
+  const ccEmails = await getCCEmails();
+  const ccStr = ccEmails.length ? ccEmails.map(e=>encodeURIComponent(e)).join(',') : '';
+  const ccParam = ccStr ? '&cc=' + ccStr : '';
+  window.location.href = 'mailto:?' + ccParam + '&subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
+}
+
 // ── DEFECTS ───────────────────────────────────────────────────────────────
 let currentDefectId = null;
 let defectPhotoData = null;
@@ -1637,6 +1981,18 @@ window.updateAdHocName=updateAdHocName;
 window.updateAdHocDesc=updateAdHocDesc;
 window.loadAdminDefects=loadAdminDefects;
 window.sendDefectEmail=sendDefectEmail;
+window.openPCSetup=openPCSetup;
+window.startPCInspection=startPCInspection;
+window.addPCItem=addPCItem;
+window.updatePCItem=updatePCItem;
+window.setPCBadge=setPCBadge;
+window.removePCItem=removePCItem;
+window.handlePCPhoto=handlePCPhoto;
+window.removePCPhoto=removePCPhoto;
+window.goToPCSignatures=goToPCSignatures;
+window.clearSig=clearSig;
+window.captureSig=captureSig;
+window.completePCCertificate=completePCCertificate;
 </script>
 </body>
 </html>
