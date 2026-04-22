@@ -289,6 +289,8 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
     <button class="ghost-btn" onclick="openPCSetup()" style="border-color:#B7B09C;color:#B7B09C;">PC Certificate</button>
     <div style="font-size:11px;font-weight:700;color:#9A9690;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Previous inspections</div>
     <div id="inspections-list"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+    <div style="font-size:11px;font-weight:700;color:#9A9690;text-transform:uppercase;letter-spacing:.08em;margin-top:20px;margin-bottom:10px;">PC Certificates</div>
+    <div id="pc-list"><div class="loading"><div class="spinner"></div>Loading…</div></div>
   </div>
 </div>
 
@@ -838,6 +840,7 @@ async function openJob(job) {
   `;
   showScreen('screen-job-detail');
   loadInspections();
+  loadPCCertificates();
 }
 
 async function loadInspections() {
@@ -1479,8 +1482,13 @@ async function completePCCertificate() {
   try {
     const ref = await db.collection('jobs').doc(currentJob.id).collection('pc-certificates').add(certData);
     showToast('Certificate saved ✓');
-    // Generate email
-    await sendPCEmail(ref.id, certData);
+    // Navigate to job detail first
+    showScreen('screen-job-detail');
+    loadInspections();
+    // Then open email after short delay
+    setTimeout(async function() {
+      await sendPCEmail(ref.id, certData);
+    }, 500);
   } catch(e) { showToast('Error saving: ' + e.message); }
 }
 
@@ -2049,6 +2057,8 @@ window.goToPCSignatures=goToPCSignatures;
 window.clearSig=clearSig;
 window.captureSig=captureSig;
 window.completePCCertificate=completePCCertificate;
+window.loadPCCertificates=loadPCCertificates;
+window.openPCCertificate=openPCCertificate;
 </script>
 </body>
 </html>
