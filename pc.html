@@ -101,8 +101,7 @@ async function loadCert() {
           ? item.photos.map(function(p){ return '<img src="' + p + '">'; }).join('') : '';
         return '<div class="item">' +
           (item.trade ? '<div class="item-trade">' + item.trade + '</div>' : '') +
-          '<div class="item-desc">' + (item.desc||'').replace(/
-/g,'<br>') + '</div>' +
+          '<div class="item-desc">' + (item.desc||'').split('\n').join('<br>') + '</div>' +
           '<div class="item-meta">' + badgeHtml + rectHtml + '</div>' +
           (photosHtml ? '<div class="item-photos">' + photosHtml + '</div>' : '') +
           '</div>';

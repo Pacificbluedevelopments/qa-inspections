@@ -103,8 +103,7 @@ async function loadDefect() {
       '<div class="section">' +
         '<div class="section-title">Defect</div>' +
         '<div style="font-size:17px;font-weight:700;color:#1A1F24;margin-bottom:10px;">' + def.name + '</div>' +
-        (def.desc ? '<div style="font-size:14px;color:#5C5A57;line-height:1.65;">' + def.desc.replace(/
-/g,'<br>') + '</div>' : '') +
+        (def.desc ? '<div style="font-size:14px;color:#5C5A57;line-height:1.65;">' + def.desc.split('\n').join('<br>') + '</div>' : '') +
         (def.photoURL ? '<img class="photo" src="' + def.photoURL + '">' : '') +
       '</div>' +
       rectSection +
