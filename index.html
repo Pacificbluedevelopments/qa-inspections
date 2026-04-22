@@ -118,6 +118,21 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
 .action-card h3{font-size:14px;font-weight:700;color:#333F48;margin-bottom:3px;}
 .action-card p{font-size:12px;color:#5C5A57;margin-bottom:14px;line-height:1.6;}
 
+
+/* DEFECTS */
+.defect-item{background:#fff;border-radius:10px;border:1px solid #E4E0DA;padding:14px 16px;margin-bottom:10px;border-left:4px solid transparent;cursor:pointer;}
+.defect-item.open{border-left-color:#A84232;}
+.defect-item.rectified{border-left-color:#4A7C4A;opacity:0.75;}
+.defect-item:active{background:#F7F6F4;}
+.defect-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;}
+.defect-name{font-size:14px;font-weight:600;color:#1A1F24;flex:1;margin-right:10px;}
+.defect-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;white-space:nowrap;flex-shrink:0;}
+.defect-badge.open{background:#F5E8E5;color:#6B2318;border:1px solid #A84232;}
+.defect-badge.rectified{background:#E8F0E8;color:#1E4D1E;border:1px solid #4A7C4A;}
+.defect-meta{font-size:12px;color:#9A9690;margin-top:2px;}
+.defect-source{font-size:11px;color:#B7B09C;margin-top:3px;}
+.defect-count{display:inline-flex;align-items:center;justify-content:center;background:#A84232;color:#fff;border-radius:10px;font-size:11px;font-weight:700;padding:2px 8px;margin-left:8px;}
+
 /* ADMIN */
 .admin-item{background:#fff;border-radius:10px;border:1px solid #E4E0DA;padding:14px 16px;margin-bottom:10px;}
 .admin-item-name{font-size:14px;font-weight:600;color:#1A1F24;}
@@ -253,6 +268,7 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
   <div class="body">
     <div class="card" id="jd-meta" style="margin-bottom:20px;"></div>
     <button class="primary-btn" onclick="startNewInspection()">+ New inspection</button>
+    <button class="secondary-btn" onclick="openDefectsScreen()" id="defects-btn">Defects</button>
     <div style="font-size:11px;font-weight:700;color:#9A9690;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Previous inspections</div>
     <div id="inspections-list"><div class="loading"><div class="spinner"></div>Loading…</div></div>
   </div>
@@ -296,6 +312,9 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
     <div class="prog-txt" id="prog-txt">0 items</div>
   </div>
   <div id="checklist-body"></div>
+  <div style="padding:16px;background:#F7F6F4;border-top:1px solid #E4E0DA;">
+    <button class="ghost-btn" onclick="openAdHocItem()" style="margin-bottom:0;">+ Add item not on this checklist</button>
+  </div>
 </div>
 
 <!-- SUMMARY -->
@@ -324,6 +343,68 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
   <div style="padding:16px;">
     <button class="primary-btn" onclick="generateEmail()">Send report via Outlook</button>
     <button class="ghost-btn" onclick="showScreen('screen-sum')" style="margin-top:4px;">‹ Back to summary</button>
+  </div>
+</div>
+
+
+<!-- JOB DEFECTS SCREEN -->
+<div id="screen-defects" class="screen">
+  <div class="bar">
+    <div class="bar-row">
+      <div><div class="bar-label" id="def-job-label">Pacific Blue</div><div class="bar-title">Defects</div></div>
+      <button class="bar-btn" onclick="showScreen('screen-job-detail')">‹ Back</button>
+    </div>
+  </div>
+  <div class="body">
+    <button class="primary-btn" onclick="openRaiseDefect()" style="margin-bottom:20px;">+ Raise defect</button>
+    <div id="defects-list"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+  </div>
+</div>
+
+<!-- DEFECT DETAIL SCREEN -->
+<div id="screen-defect-detail" class="screen">
+  <div class="bar">
+    <div class="bar-row">
+      <div><div class="bar-label">Pacific Blue</div><div class="bar-title">Defect</div></div>
+      <button class="bar-btn" onclick="showScreen('screen-defects');loadDefects()">‹ Back</button>
+    </div>
+  </div>
+  <div class="body" id="defect-detail-body"></div>
+</div>
+
+<!-- RAISE DEFECT MODAL -->
+<div class="modal-overlay" id="modal-defect">
+  <div class="modal-box" style="max-height:85vh;overflow-y:auto;">
+    <div class="modal-title">Raise Defect</div>
+    <div class="modal-field"><label>Defect description</label><input id="def-name" type="text" placeholder="e.g. Cracked render on north wall"></div>
+    <div class="modal-field"><label>Details</label><textarea id="def-desc" placeholder="Describe the defect in detail…"></textarea></div>
+    <div class="modal-field"><label>Subcontractor responsible</label><input id="def-sub" type="text" placeholder="e.g. Sunshine Coast Plastering"></div>
+    <div class="modal-field">
+      <label>Photo</label>
+      <div id="def-photo-preview" style="margin-bottom:8px;"></div>
+      <label class="photo-label-btn" style="display:inline-flex;">📷 Add photo<input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleDefectPhoto(this)"></label>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('modal-defect')">Cancel</button>
+      <button class="modal-save" onclick="saveRaisedDefect()">Raise defect</button>
+    </div>
+  </div>
+</div>
+
+<!-- RECTIFY MODAL -->
+<div class="modal-overlay" id="modal-rectify">
+  <div class="modal-box" style="max-height:85vh;overflow-y:auto;">
+    <div class="modal-title">Mark as Rectified</div>
+    <div class="modal-field"><label>Rectification notes</label><textarea id="rect-notes" placeholder="Describe how the defect was rectified…"></textarea></div>
+    <div class="modal-field">
+      <label>Photo of rectification</label>
+      <div id="rect-photo-preview" style="margin-bottom:8px;"></div>
+      <label class="photo-label-btn" style="display:inline-flex;">📷 Add photo<input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleRectPhoto(this)"></label>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('modal-rectify')">Cancel</button>
+      <button class="modal-save" onclick="saveRectification()">Confirm rectified</button>
+    </div>
   </div>
 </div>
 
@@ -363,6 +444,7 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
     <div style="display:flex;gap:0;margin-bottom:20px;border:1.5px solid #E4E0DA;border-radius:10px;overflow:hidden;">
       <button id="tab-checklists" onclick="switchAdminTab('checklists')" style="flex:1;padding:12px;background:#333F48;color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;">Checklists</button>
       <button id="tab-jobs" onclick="switchAdminTab('jobs')" style="flex:1;padding:12px;background:#F7F6F4;color:#5C5A57;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;">Jobs</button>
+      <button id="tab-defects" onclick="switchAdminTab('defects')" style="flex:1;padding:12px;background:#F7F6F4;color:#5C5A57;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;">Defects</button>
     </div>
     <div id="admin-tab-checklists">
       <div style="background:#fff;border-radius:12px;border:1px solid #E4E0DA;padding:16px;margin-bottom:20px;">
@@ -382,6 +464,10 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
     <div id="admin-tab-jobs" style="display:none;">
       <div style="font-size:14px;font-weight:700;color:#333F48;margin-bottom:16px;">Jobs</div>
       <div id="admin-jobs-list"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+    </div>
+    <div id="admin-tab-defects" style="display:none;">
+      <div style="font-size:14px;font-weight:700;color:#333F48;margin-bottom:16px;">All open defects</div>
+      <div id="admin-defects-list"><div class="loading"><div class="spinner"></div>Loading…</div></div>
     </div>
   </div>
 </div>
@@ -826,6 +912,38 @@ async function goSummary() {
       const ref = await db.collection('jobs').doc(currentJob.id).collection('inspections').add(inspData);
       currentInspection.id = ref.id;
     }
+
+    // Auto-create defects for all FAIL items
+    for (const [num, nm, rq] of activeItems) {
+      if (results[num] === 'FAIL') {
+        const itemNote = notes[num] || '';
+        const itemPhotos = (photoURLs[num] || []).filter(Boolean);
+        const itemPhotoData = itemPhotos.length ? itemPhotos[0] : null;
+        // Check if defect already exists for this item in this inspection
+        const existing = await db.collection('jobs').doc(currentJob.id).collection('defects')
+          .where('inspectionId','==',currentInspection.id)
+          .where('itemNum','==',num).get();
+        if (existing.empty) {
+          const isAdHoc = num.startsWith('AH');
+          const actualName = isAdHoc ? (adHocNames[num] || nm) : nm;
+          const actualDesc = isAdHoc ? (adHocDescs[num] || '') : rq;
+          await db.collection('jobs').doc(currentJob.id).collection('defects').add({
+            name: actualName,
+            desc: actualDesc + (itemNote ? '\n\nNote: ' + itemNote : ''),
+            subcontractor: currentInspection.subcontractor || 'Not specified',
+            photoURL: itemPhotoData,
+            status: 'open',
+            raisedBy: currentUser?.email || 'Unknown',
+            dateRaised: new Date().toLocaleDateString('en-AU',{day:'2-digit',month:'short',year:'numeric'}),
+            source: currentInspection.type + ' inspection',
+            inspectionId: currentInspection.id,
+            itemNum: num,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+      }
+    }
+
     showToast('Inspection saved ✓');
   } catch(e) { showToast('Could not save — check connection'); }
 
@@ -956,6 +1074,257 @@ async function generateEmail() {
   window.location.href = `mailto:?${ccParam}&subject=${subj}&body=${encodeURIComponent(body)}`;
 }
 
+
+// ── DEFECTS ───────────────────────────────────────────────────────────────
+let currentDefectId = null;
+let defectPhotoData = null;
+let rectPhotoData = null;
+let adHocItemCount = 0;
+
+async function openDefectsScreen() {
+  document.getElementById('def-job-label').textContent = currentJob.jobNumber;
+  showScreen('screen-defects');
+  await loadDefects();
+}
+
+async function loadDefects() {
+  const list = document.getElementById('defects-list');
+  list.innerHTML = '<div class="loading"><div class="spinner"></div>Loading…</div>';
+  try {
+    const snap = await db.collection('jobs').doc(currentJob.id).collection('defects').get();
+    if (snap.empty) {
+      list.innerHTML = '<div class="empty-state"><div class="es-icon">✅</div><div class="es-title">No defects</div><div class="es-sub">No defects have been raised for this job.</div></div>';
+      updateDefectCount(0);
+      return;
+    }
+    const defects = [];
+    snap.forEach(d => defects.push({ id:d.id, ...d.data() }));
+    defects.sort((a,b) => {
+      if (a.status === b.status) return (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0);
+      return a.status === 'open' ? -1 : 1;
+    });
+    const openCount = defects.filter(d => d.status === 'open').length;
+    updateDefectCount(openCount);
+    list.innerHTML = '';
+    defects.forEach(def => {
+      const div = document.createElement('div');
+      div.className = 'defect-item ' + def.status;
+      div.innerHTML = `
+        <div class="defect-header">
+          <div class="defect-name">${def.name}</div>
+          <span class="defect-badge ${def.status}">${def.status === 'open' ? 'Open' : 'Rectified'}</span>
+        </div>
+        <div class="defect-meta">${def.subcontractor||''}${def.subcontractor&&def.raisedBy?' · ':''}${def.raisedBy||''}</div>
+        <div class="defect-source">${def.source||'Standalone'} · ${def.dateRaised||''}</div>
+      `;
+      div.onclick = () => openDefectDetail(def);
+      list.appendChild(div);
+    });
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state"><div class="es-title">Error: '+e.message+'</div></div>';
+  }
+}
+
+function updateDefectCount(count) {
+  const btn = document.getElementById('defects-btn');
+  if (!btn) return;
+  if (count > 0) {
+    btn.innerHTML = 'Defects<span class="defect-count">'+count+'</span>';
+  } else {
+    btn.textContent = 'Defects';
+  }
+}
+
+function openDefectDetail(def) {
+  currentDefectId = def.id;
+  const isOpen = def.status === 'open';
+  const photoHtml = def.photoURL ? `<img src="${def.photoURL}" style="width:100%;border-radius:8px;border:1px solid #E4E0DA;margin-bottom:12px;">` : '';
+  const rectPhotoHtml = def.rectPhotoURL ? `<img src="${def.rectPhotoURL}" style="width:100%;border-radius:8px;border:1px solid #E4E0DA;margin-bottom:12px;">` : '';
+  
+  document.getElementById('defect-detail-body').innerHTML = `
+    <div style="background:${isOpen?'#F5E8E5':'#E8F0E8'};border-radius:10px;padding:14px 16px;margin-bottom:16px;border:1.5px solid ${isOpen?'#A84232':'#4A7C4A'};">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:${isOpen?'#6B2318':'#1E4D1E'};margin-bottom:4px;">${isOpen?'Open defect':'Rectified'}</div>
+      <div style="font-size:17px;font-weight:700;color:${isOpen?'#6B2318':'#1E4D1E'};">${def.name}</div>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      ${def.desc ? `<div style="font-size:13px;color:#5C5A57;line-height:1.6;margin-bottom:12px;">${def.desc}</div>` : ''}
+      <div class="meta-row"><span class="meta-k">Subcontractor</span><span class="meta-v">${def.subcontractor||'Not specified'}</span></div>
+      <div class="meta-row"><span class="meta-k">Raised by</span><span class="meta-v">${def.raisedBy||'—'}</span></div>
+      <div class="meta-row"><span class="meta-k">Date raised</span><span class="meta-v">${def.dateRaised||'—'}</span></div>
+      <div class="meta-row" style="border-bottom:none;"><span class="meta-k">Source</span><span class="meta-v">${def.source||'Standalone'}</span></div>
+    </div>
+    ${photoHtml ? `<div style="margin-bottom:14px;"><div style="font-size:11px;font-weight:700;color:#9A9690;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">Defect photo</div>${photoHtml}</div>` : ''}
+    ${!isOpen ? `
+      <div class="card" style="margin-bottom:14px;border-color:#4A7C4A;">
+        <div style="font-size:12px;font-weight:700;color:#1E4D1E;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Rectification</div>
+        ${def.rectNotes ? `<div style="font-size:13px;color:#5C5A57;line-height:1.6;margin-bottom:8px;">${def.rectNotes}</div>` : ''}
+        <div class="meta-row"><span class="meta-k">Rectified by</span><span class="meta-v">${def.rectifiedBy||'—'}</span></div>
+        <div class="meta-row" style="border-bottom:none;"><span class="meta-k">Date rectified</span><span class="meta-v">${def.dateRectified||'—'}</span></div>
+      </div>
+      ${rectPhotoHtml ? `<div style="margin-bottom:14px;"><div style="font-size:11px;font-weight:700;color:#9A9690;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">Rectification photo</div>${rectPhotoHtml}</div>` : ''}
+    ` : ''}
+    ${isOpen ? `<button class="primary-btn" onclick="openRectifyModal()">Mark as rectified</button>` : ''}
+    <button class="ghost-btn" onclick="showScreen('screen-defects');loadDefects()">‹ Back to defects</button>
+  `;
+  showScreen('screen-defect-detail');
+}
+
+function openRaiseDefect() {
+  defectPhotoData = null;
+  document.getElementById('def-name').value = '';
+  document.getElementById('def-desc').value = '';
+  document.getElementById('def-sub').value = '';
+  document.getElementById('def-photo-preview').innerHTML = '';
+  openModal('modal-defect');
+}
+
+async function handleDefectPhoto(input) {
+  if (!input.files[0]) return;
+  defectPhotoData = await compressImage(input.files[0]);
+  document.getElementById('def-photo-preview').innerHTML = `<img src="${defectPhotoData}" style="width:100%;border-radius:8px;border:1px solid #E4E0DA;">`;
+}
+
+async function saveRaisedDefect(fromInspection, itemName, itemDesc, itemNote, itemPhotoData) {
+  const name = fromInspection ? itemName : document.getElementById('def-name').value.trim();
+  const desc = fromInspection ? (itemDesc + (itemNote ? '\n\nNote: ' + itemNote : '')) : document.getElementById('def-desc').value.trim();
+  const sub = fromInspection ? currentInspection.subcontractor : document.getElementById('def-sub').value.trim();
+  const photoSrc = fromInspection ? itemPhotoData : defectPhotoData;
+  
+  if (!name) { showToast('Enter a defect description'); return; }
+  
+  let photoURL = null;
+  if (photoSrc) {
+    try {
+      const path = 'defects/' + currentJob.id + '/' + Date.now() + '.jpg';
+      const ref = storage.ref(path);
+      await ref.putString(photoSrc, 'data_url');
+      photoURL = await ref.getDownloadURL();
+    } catch(e) { photoURL = photoSrc; }
+  }
+
+  await db.collection('jobs').doc(currentJob.id).collection('defects').add({
+    name, desc, subcontractor: sub || 'Not specified',
+    photoURL,
+    status: 'open',
+    raisedBy: currentUser?.email || 'Unknown',
+    dateRaised: new Date().toLocaleDateString('en-AU',{day:'2-digit',month:'short',year:'numeric'}),
+    source: fromInspection ? (currentInspection.type + ' inspection') : 'Standalone',
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  if (!fromInspection) {
+    closeModal('modal-defect');
+    await loadDefects();
+    showToast('Defect raised');
+  }
+}
+
+function openRectifyModal() {
+  rectPhotoData = null;
+  document.getElementById('rect-notes').value = '';
+  document.getElementById('rect-photo-preview').innerHTML = '';
+  openModal('modal-rectify');
+}
+
+async function handleRectPhoto(input) {
+  if (!input.files[0]) return;
+  rectPhotoData = await compressImage(input.files[0]);
+  document.getElementById('rect-photo-preview').innerHTML = `<img src="${rectPhotoData}" style="width:100%;border-radius:8px;border:1px solid #E4E0DA;">`;
+}
+
+async function saveRectification() {
+  const notes = document.getElementById('rect-notes').value.trim();
+  let rectPhotoURL = null;
+  if (rectPhotoData) {
+    try {
+      const path = 'defects/' + currentJob.id + '/rect_' + Date.now() + '.jpg';
+      const ref = storage.ref(path);
+      await ref.putString(rectPhotoData, 'data_url');
+      rectPhotoURL = await ref.getDownloadURL();
+    } catch(e) { rectPhotoURL = rectPhotoData; }
+  }
+  await db.collection('jobs').doc(currentJob.id).collection('defects').doc(currentDefectId).update({
+    status: 'rectified',
+    rectNotes: notes,
+    rectPhotoURL,
+    rectifiedBy: currentUser?.email || 'Unknown',
+    dateRectified: new Date().toLocaleDateString('en-AU',{day:'2-digit',month:'short',year:'numeric'}),
+  });
+  closeModal('modal-rectify');
+  showToast('Defect marked as rectified ✓');
+  showScreen('screen-defects');
+  loadDefects();
+}
+
+// Ad hoc item during inspection
+function openAdHocItem() {
+  adHocItemCount++;
+  const num = 'AH' + adHocItemCount;
+  const body = document.getElementById('checklist-body');
+  const div = document.createElement('div');
+  div.className = 'icard'; div.id = 'card-'+num;
+  div.innerHTML = `
+    <div class="inum" style="color:#B7B09C;">Additional item ${adHocItemCount}</div>
+    <div class="field" style="margin-bottom:8px;"><input type="text" id="ahname-${num}" placeholder="Item name" style="width:100%;padding:10px 12px;font-size:14px;border:1.5px solid #E4E0DA;border-radius:8px;background:#F7F6F4;color:#1A1F24;outline:none;" oninput="updateAdHocName('${num}',this.value)"></div>
+    <div class="field" style="margin-bottom:12px;"><textarea id="ahdesc-${num}" placeholder="Describe the issue…" style="width:100%;padding:10px 12px;font-size:13px;border:1.5px solid #E4E0DA;border-radius:8px;background:#F7F6F4;color:#1A1F24;outline:none;resize:none;min-height:60px;line-height:1.5;" oninput="updateAdHocDesc('${num}',this.value)"></textarea></div>
+    <div class="btn-row">
+      <button class="rbtn" onclick="setResult('${num}','PASS',this)">✓ Pass</button>
+      <button class="rbtn" onclick="setResult('${num}','FAIL',this)">✗ Fail</button>
+      <button class="rbtn" onclick="setResult('${num}','NA',this)">— N/A</button>
+    </div>
+    <label class="note-label">Notes</label>
+    <textarea class="note-field" id="note-${num}" placeholder="Add notes…" oninput="notes['${num}']=this.value"></textarea>
+    <label class="note-label">Photos</label>
+    <div class="photos-row" id="photos-${num}"></div>
+    <label class="photo-label-btn">📷 Add photo<input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="handlePhotos('${num}',this)"></label>
+  `;
+  body.appendChild(div);
+  // Add to activeItems
+  activeItems.push([num, 'Additional item '+adHocItemCount, '']);
+  if (!currentInspection) currentInspection = {};
+  currentInspection.totalItems = activeItems.length;
+  div.scrollIntoView({ behavior:'smooth' });
+}
+
+const adHocNames = {}, adHocDescs = {};
+function updateAdHocName(num, val) { adHocNames[num] = val; }
+function updateAdHocDesc(num, val) { adHocDescs[num] = val; }
+
+// Override goSummary to also create defects for all FAILed items
+const _origGoSummary = window.goSummary;
+
+// Admin defects view
+async function loadAdminDefects() {
+  const list = document.getElementById('admin-defects-list');
+  list.innerHTML = '<div class="loading"><div class="spinner"></div>Loading…</div>';
+  try {
+    const jobsSnap = await db.collection('jobs').get();
+    const allDefects = [];
+    for (const jobDoc of jobsSnap.docs) {
+      const job = { id:jobDoc.id, ...jobDoc.data() };
+      const defSnap = await db.collection('jobs').doc(job.id).collection('defects').where('status','==','open').get();
+      defSnap.forEach(d => allDefects.push({ id:d.id, jobAddr:job.address, jobId:job.id, ...d.data() }));
+    }
+    if (!allDefects.length) {
+      list.innerHTML = '<div class="empty-state"><div class="es-icon">✅</div><div class="es-title">No open defects</div><div class="es-sub">All defects across all jobs have been rectified.</div></div>';
+      return;
+    }
+    allDefects.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    list.innerHTML = '';
+    allDefects.forEach(def => {
+      const div = document.createElement('div'); div.className = 'admin-item';
+      div.innerHTML = `
+        <div style="font-size:11px;color:#B7B09C;margin-bottom:3px;">${def.jobAddr}</div>
+        <div class="admin-item-name">${def.name}</div>
+        <div class="admin-item-desc">${def.subcontractor||''} · ${def.dateRaised||''} · ${def.source||''}</div>
+      `;
+      list.appendChild(div);
+    });
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state"><div class="es-title">Error: '+e.message+'</div></div>';
+  }
+}
+
 // ── PIN ────────────────────────────────────────────────────────────────────
 function pinKey(d) {
   if(pinEntry.length>=4) return;
@@ -984,13 +1353,13 @@ async function showAdminScreen() {
 }
 
 function switchAdminTab(tab) {
-  document.getElementById('admin-tab-checklists').style.display=tab==='checklists'?'block':'none';
-  document.getElementById('admin-tab-jobs').style.display=tab==='jobs'?'block':'none';
-  document.getElementById('tab-checklists').style.background=tab==='checklists'?'#333F48':'#F7F6F4';
-  document.getElementById('tab-checklists').style.color=tab==='checklists'?'#fff':'#5C5A57';
-  document.getElementById('tab-jobs').style.background=tab==='jobs'?'#333F48':'#F7F6F4';
-  document.getElementById('tab-jobs').style.color=tab==='jobs'?'#fff':'#5C5A57';
+  ['checklists','jobs','defects'].forEach(t => {
+    document.getElementById('admin-tab-'+t).style.display = tab===t?'block':'none';
+    document.getElementById('tab-'+t).style.background = tab===t?'#333F48':'#F7F6F4';
+    document.getElementById('tab-'+t).style.color = tab===t?'#fff':'#5C5A57';
+  });
   if(tab==='jobs') loadAdminJobs();
+  if(tab==='defects') loadAdminDefects();
 }
 
 function renderAdminChecklists() {
@@ -1220,6 +1589,19 @@ window.loadAdminJobs=loadAdminJobs; window.openEditJob=openEditJob; window.saveJ
 window.deleteJob=deleteJob; window.manageInspections=manageInspections; window.deleteInspection=deleteInspection;
 window.saveCCEmails=saveCCEmails; window.closeModal=closeModal;
 window.viewSavedInspection=viewSavedInspection;
+window.openDefectsScreen=openDefectsScreen;
+window.loadDefects=loadDefects;
+window.openDefectDetail=openDefectDetail;
+window.openRaiseDefect=openRaiseDefect;
+window.handleDefectPhoto=handleDefectPhoto;
+window.saveRaisedDefect=saveRaisedDefect;
+window.openRectifyModal=openRectifyModal;
+window.handleRectPhoto=handleRectPhoto;
+window.saveRectification=saveRectification;
+window.openAdHocItem=openAdHocItem;
+window.updateAdHocName=updateAdHocName;
+window.updateAdHocDesc=updateAdHocDesc;
+window.loadAdminDefects=loadAdminDefects;
 </script>
 </body>
 </html>
