@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pacific Blue – Defect Notice</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Poppins',Arial,sans-serif;background:#F7F6F4;color:#1A1F24;}
@@ -38,19 +40,15 @@ body{font-family:'Poppins',Arial,sans-serif;background:#F7F6F4;color:#1A1F24;}
   </div>
   <div id="report-content"><div class="loading"><div class="spinner"></div>Loading…</div></div>
 </div>
-
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
-  // Parse params first
-  var params = new URLSearchParams(window.location.search);
-  var jobId = params.get('job');
-  var defId = params.get('def');
+var params = new URLSearchParams(window.location.search);
+var jobId = params.get('job');
+var defId = params.get('def');
 
-  if (!jobId || !defId) {
-    document.getElementById('report-content').innerHTML = '<div class="loading">Missing report parameters.<br><small>job=' + jobId + ' def=' + defId + '</small></div>';
-  } else {
-    // Init Firebase
+if (!jobId || !defId) {
+  document.getElementById('report-content').innerHTML = '<div class="loading">Missing parameters. job=' + jobId + ' def=' + defId + '</div>';
+} else {
+  try {
     firebase.initializeApp({
       apiKey: "AIzaSyBZFQgLMLKQF80_CMYqSq5ZcbJM0_H9w2M",
       authDomain: "pacific-blue-qa.firebaseapp.com",
@@ -59,26 +57,22 @@ body{font-family:'Poppins',Arial,sans-serif;background:#F7F6F4;color:#1A1F24;}
       messagingSenderId: "136808210337",
       appId: "1:136808210337:web:ae0fb3aff55195168f35e0"
     });
+  } catch(initErr) {
+    // Already initialized - ignore
+  }
 
-    var db = firebase.firestore();
+  var db = firebase.firestore();
 
-    // Load data
-    Promise.all([
-      db.collection('jobs').doc(jobId).get(),
-      db.collection('jobs').doc(jobId).collection('defects').doc(defId).get()
-    ]).then(function(results) {
-      var jobDoc = results[0];
-      var defDoc = results[1];
-
-      if (!jobDoc.exists) {
-        document.getElementById('report-content').innerHTML = '<div class="loading">Job not found (ID: ' + jobId + ')</div>';
-        return;
-      }
+  db.collection('jobs').doc(jobId).get().then(function(jobDoc) {
+    if (!jobDoc.exists) {
+      document.getElementById('report-content').innerHTML = '<div class="loading">Job not found.</div>';
+      return;
+    }
+    return db.collection('jobs').doc(jobId).collection('defects').doc(defId).get().then(function(defDoc) {
       if (!defDoc.exists) {
-        document.getElementById('report-content').innerHTML = '<div class="loading">Defect not found (ID: ' + defId + ')</div>';
+        document.getElementById('report-content').innerHTML = '<div class="loading">Defect not found.</div>';
         return;
       }
-
       var job = jobDoc.data();
       var def = defDoc.data();
       var isOpen = def.status === 'open';
@@ -92,10 +86,11 @@ body{font-family:'Poppins',Arial,sans-serif;background:#F7F6F4;color:#1A1F24;}
 
       var rectSection = '';
       if (!isOpen) {
-        rectSection = '<div class="divider"></div><div class="section"><div class="rect-box"><div class="rect-title">✓ Rectification details</div>' +
+        rectSection = '<div class="divider"></div><div class="section"><div class="rect-box">' +
+          '<div class="rect-title">✓ Rectification details</div>' +
           (def.rectNotes ? '<div style="font-size:13px;color:#1E4D1E;line-height:1.6;margin-bottom:10px;">' + def.rectNotes + '</div>' : '') +
           '<div style="font-size:12px;color:#4A7C4A;">Rectified by ' + (def.rectifiedBy||'—') + ' on ' + (def.dateRectified||'—') + '</div>' +
-          (def.rectPhotoURL ? '<img class="photo" src="' + def.rectPhotoURL + '" alt="Rectification photo" style="margin-top:12px;">' : '') +
+          (def.rectPhotoURL ? '<img class="photo" src="' + def.rectPhotoURL + '" style="margin-top:12px;">' : '') +
           '</div></div>';
       }
 
@@ -118,15 +113,15 @@ body{font-family:'Poppins',Arial,sans-serif;background:#F7F6F4;color:#1A1F24;}
           '<div style="font-size:17px;font-weight:700;color:#1A1F24;margin-bottom:10px;">' + def.name + '</div>' +
           (def.desc ? '<div style="font-size:14px;color:#5C5A57;line-height:1.65;">' + def.desc.replace(/
 /g,'<br>') + '</div>' : '') +
-          (def.photoURL ? '<img class="photo" src="' + def.photoURL + '" alt="Defect photo">' : '') +
+          (def.photoURL ? '<img class="photo" src="' + def.photoURL + '">' : '') +
         '</div>' +
         rectSection +
         '<div class="footer">Pacific Blue · Design. Construct. Immerse · Generated by the Pacific Blue QA system</div>';
-
-    }).catch(function(e) {
-      document.getElementById('report-content').innerHTML = '<div class="loading" style="color:#A84232;">Error: ' + e.message + '<br><small>' + e.code + '</small></div>';
     });
-  }
+  }).catch(function(e) {
+    document.getElementById('report-content').innerHTML = '<div class="loading" style="color:#A84232;">Error: ' + e.message + '<br><small>Code: ' + (e.code||'unknown') + '</small></div>';
+  });
+}
 </script>
 </body>
 </html>
