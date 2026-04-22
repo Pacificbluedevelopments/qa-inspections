@@ -1232,44 +1232,115 @@ let pcItemCounter = 0;
 
 function addPCItem(part) {
   pcItemCounter++;
-  const id = 'pc-' + part + '-' + pcItemCounter;
-  const container = part === 'part1' ? document.getElementById('pc-items-body') : document.getElementById('pc-items-part2');
-  const div = document.createElement('div');
-  div.className = 'pc-item'; div.id = 'pcitem-' + id;
-  var rectDateHtml = part === 'part1' ?
-    '<div style="margin-bottom:10px;">' +
-    '<label style="display:block;font-size:11px;font-weight:600;color:#9A9690;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;">Date of rectification</label>' +
-    '<input type="date" id="pcrect-' + id + '" style="width:100%;padding:10px 12px;font-size:14px;border:1.5px solid #E4E0DA;border-radius:8px;background:#F7F6F4;color:#1A1F24;outline:none;font-family:Poppins,sans-serif;" onchange="updatePCItem('' + id + '','' + part + '')">' +
-    '</div>' : '';
-  div.innerHTML =
-    '<div class="pc-item-header">' +
-      '<input type="text" id="pctrade-' + id + '" placeholder="Trade (e.g. Painters)" style="font-size:11px;font-weight:700;color:#B7B09C;text-transform:uppercase;letter-spacing:.06em;border:none;background:transparent;outline:none;font-family:Poppins,sans-serif;width:60%;" oninput="updatePCItem('' + id + '','' + part + '')">' +
-      '<button onclick="removePCItem('' + id + '','' + part + '')" style="background:none;border:none;color:#E4E0DA;font-size:18px;cursor:pointer;padding:0;">×</button>' +
-    '</div>' +
-    '<textarea id="pcdesc-' + id + '" placeholder="Describe the defect or omission…" style="width:100%;padding:10px 12px;font-size:13px;border:1.5px solid #E4E0DA;border-radius:8px;background:#F7F6F4;color:#1A1F24;outline:none;resize:none;min-height:64px;line-height:1.5;margin-bottom:10px;font-family:Poppins,sans-serif;" oninput="updatePCItem('' + id + '','' + part + '')"></textarea>' +
-    '<div class="pc-badge-row">' +
-      '<button class="pc-badge-btn" id="pcbadge-defect-' + id + '" onclick="setPCBadge('' + id + '','' + part + '','defect')">Minor Defect</button>' +
-      '<button class="pc-badge-btn" id="pcbadge-omission-' + id + '" onclick="setPCBadge('' + id + '','' + part + '','omission')">Minor Omission</button>' +
-    '</div>' +
-    rectDateHtml +
-    '<label style="display:block;font-size:11px;font-weight:600;color:#9A9690;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;">Photos</label>' +
-    '<div class="photos-row" id="pcphotos-' + id + '"></div>' +
-    '<label class="photo-label-btn">📷 Add photo<input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="handlePCPhoto('' + id + '',this)"></label>';
+  var id = 'pc-' + part + '-' + pcItemCounter;
+  var container = part === 'part1'
+    ? document.getElementById('pc-items-body')
+    : document.getElementById('pc-items-part2');
+
+  var div = document.createElement('div');
+  div.className = 'pc-item';
+  div.id = 'pcitem-' + id;
+
+  // Build using DOM to avoid string escaping issues
+  var header = document.createElement('div');
+  header.className = 'pc-item-header';
+
+  var tradeInput = document.createElement('input');
+  tradeInput.type = 'text';
+  tradeInput.id = 'pctrade-' + id;
+  tradeInput.placeholder = 'Trade (e.g. Painters)';
+  tradeInput.style.cssText = 'font-size:11px;font-weight:700;color:#B7B09C;text-transform:uppercase;letter-spacing:.06em;border:none;background:transparent;outline:none;width:60%;';
+  tradeInput.oninput = function() { updatePCItemById(id, part); };
+  header.appendChild(tradeInput);
+
+  var removeBtn = document.createElement('button');
+  removeBtn.textContent = '×';
+  removeBtn.style.cssText = 'background:none;border:none;color:#ccc;font-size:18px;cursor:pointer;padding:0;';
+  removeBtn.onclick = function() { removePCItem(id, part); };
+  header.appendChild(removeBtn);
+  div.appendChild(header);
+
+  var textarea = document.createElement('textarea');
+  textarea.id = 'pcdesc-' + id;
+  textarea.placeholder = 'Describe the defect or omission…';
+  textarea.style.cssText = 'width:100%;padding:10px 12px;font-size:13px;border:1.5px solid #E4E0DA;border-radius:8px;background:#F7F6F4;color:#1A1F24;outline:none;resize:none;min-height:64px;line-height:1.5;margin-bottom:10px;display:block;';
+  textarea.oninput = function() { updatePCItemById(id, part); };
+  div.appendChild(textarea);
+
+  var badgeRow = document.createElement('div');
+  badgeRow.className = 'pc-badge-row';
+  var defectBtn = document.createElement('button');
+  defectBtn.className = 'pc-badge-btn';
+  defectBtn.id = 'pcbadge-defect-' + id;
+  defectBtn.textContent = 'Minor Defect';
+  defectBtn.onclick = function() { setPCBadge(id, part, 'defect'); };
+  var omissionBtn = document.createElement('button');
+  omissionBtn.className = 'pc-badge-btn';
+  omissionBtn.id = 'pcbadge-omission-' + id;
+  omissionBtn.textContent = 'Minor Omission';
+  omissionBtn.onclick = function() { setPCBadge(id, part, 'omission'); };
+  badgeRow.appendChild(defectBtn);
+  badgeRow.appendChild(omissionBtn);
+  div.appendChild(badgeRow);
+
+  if (part === 'part1') {
+    var rectWrap = document.createElement('div');
+    rectWrap.style.marginBottom = '10px';
+    var rectLabel = document.createElement('label');
+    rectLabel.textContent = 'Date of rectification';
+    rectLabel.style.cssText = 'display:block;font-size:11px;font-weight:600;color:#9A9690;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;';
+    var rectInput = document.createElement('input');
+    rectInput.type = 'date';
+    rectInput.id = 'pcrect-' + id;
+    rectInput.style.cssText = 'width:100%;padding:10px 12px;font-size:14px;border:1.5px solid #E4E0DA;border-radius:8px;background:#F7F6F4;color:#1A1F24;outline:none;';
+    rectInput.onchange = function() { updatePCItemById(id, part); };
+    rectWrap.appendChild(rectLabel);
+    rectWrap.appendChild(rectInput);
+    div.appendChild(rectWrap);
+  }
+
+  var photoLabel = document.createElement('label');
+  photoLabel.style.cssText = 'display:block;font-size:11px;font-weight:600;color:#9A9690;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;';
+  photoLabel.textContent = 'Photos';
+  div.appendChild(photoLabel);
+
+  var photoRow = document.createElement('div');
+  photoRow.className = 'photos-row';
+  photoRow.id = 'pcphotos-' + id;
+  div.appendChild(photoRow);
+
+  var photoAddLabel = document.createElement('label');
+  photoAddLabel.className = 'photo-label-btn';
+  photoAddLabel.textContent = '📷 Add photo';
+  var fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'image/*';
+  fileInput.setAttribute('capture', 'environment');
+  fileInput.multiple = true;
+  fileInput.style.display = 'none';
+  fileInput.onchange = function() { handlePCPhoto(id, this); };
+  photoAddLabel.appendChild(fileInput);
+  div.appendChild(photoAddLabel);
+
   container.appendChild(div);
-  // Add to data
-  const arr = pcItems[part];
-  arr.push({ id, trade:'', desc:'', badge:'', rectDate:'', photos:[] });
+  pcItems[part].push({ id: id, trade:'', desc:'', badge:'', rectDate:'', photos:[] });
 }
 
-function updatePCItem(id, part) {
-  const arr = pcItems[part];
-  const item = arr.find(i => i.id === id);
+
+function updatePCItemById(id, part) {
+  var arr = pcItems[part];
+  var item = arr.find(function(i){ return i.id === id; });
   if (!item) return;
-  item.trade = document.getElementById('pctrade-'+id)?.value || '';
-  item.desc = document.getElementById('pcdesc-'+id)?.value || '';
-  const rectEl = document.getElementById('pcrect-'+id);
-  if (rectEl) item.rectDate = rectEl.value ? new Date(rectEl.value).toLocaleDateString('en-AU',{day:'2-digit',month:'short',year:'numeric'}) : '';
+  var tradeEl = document.getElementById('pctrade-'+id);
+  var descEl = document.getElementById('pcdesc-'+id);
+  var rectEl = document.getElementById('pcrect-'+id);
+  if (tradeEl) item.trade = tradeEl.value || '';
+  if (descEl) item.desc = descEl.value || '';
+  if (rectEl && rectEl.value) {
+    item.rectDate = new Date(rectEl.value).toLocaleDateString('en-AU',{day:'2-digit',month:'short',year:'numeric'});
+  }
 }
+function updatePCItem(el) { /* legacy - unused */ }
 
 function setPCBadge(id, part, type) {
   document.getElementById('pcbadge-defect-'+id).className = 'pc-badge-btn' + (type==='defect'?' sel-defect':'');
@@ -1414,34 +1485,19 @@ async function completePCCertificate() {
 }
 
 async function sendPCEmail(certId, cert) {
-  const reportUrl = 'https://pacificbluedevelopments.github.io/qa-inspections/pc.html?job=' + currentJob.id + '&cert=' + certId;
-  const subj = encodeURIComponent('PC Certificate – ' + currentJob.address + ' – ' + cert.date);
-  let body = 'Please find the Practical Completion Certificate for ' + currentJob.address + ' via the link below.
-
-';
-  body += 'View PC Certificate Here:
-' + reportUrl + '
-
-';
-  body += 'Job: ' + currentJob.address + '
-';
-  body += 'Date of Practical Completion: ' + cert.date + '
-';
-  body += 'Owner: ' + cert.owner + '
-
-';
+  var reportUrl = 'https://pacificbluedevelopments.github.io/qa-inspections/pc.html?job=' + currentJob.id + '&cert=' + certId;
+  var subj = encodeURIComponent('PC Certificate – ' + currentJob.address + ' – ' + cert.date);
+  var body = 'Please find the Practical Completion Certificate for ' + currentJob.address + ' via the link below.\n\n';
+  body += 'View PC Certificate Here:\n' + reportUrl + '\n\n';
+  body += 'Job: ' + currentJob.address + '\n';
+  body += 'Date of Practical Completion: ' + cert.date + '\n';
+  body += 'Owner: ' + cert.owner + '\n\n';
   body += 'Pacific Blue';
-  const ccEmails = await getCCEmails();
-  const ccStr = ccEmails.length ? ccEmails.map(e=>encodeURIComponent(e)).join(',') : '';
-  const ccParam = ccStr ? '&cc=' + ccStr : '';
+  var ccEmails = await getCCEmails();
+  var ccStr = ccEmails.length ? ccEmails.map(function(e){return encodeURIComponent(e);}).join(',') : '';
+  var ccParam = ccStr ? '&cc=' + ccStr : '';
   window.location.href = 'mailto:?' + ccParam + '&subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
 }
-
-// ── DEFECTS ───────────────────────────────────────────────────────────────
-let currentDefectId = null;
-let defectPhotoData = null;
-let rectPhotoData = null;
-let adHocItemCount = 0;
 
 async function openDefectsScreen() {
   document.getElementById('def-job-label').textContent = currentJob.jobNumber;
