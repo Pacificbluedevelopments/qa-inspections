@@ -342,7 +342,7 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
   <div class="bar">
     <div class="bar-row">
       <div><div class="bar-label">Pacific Blue</div><div class="bar-title">Summary</div></div>
-      <button class="bar-btn" onclick="showScreen('screen-check')">‹ Back</button>
+      <button class="bar-btn" onclick="goBackToChecklist()">‹ Back</button>
     </div>
   </div>
   <div class="body" id="sum-body"></div>
@@ -353,7 +353,7 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
   <div class="bar">
     <div class="bar-row">
       <div><div class="bar-label">Pacific Blue</div><div class="bar-title" id="report-bar-title">Report</div></div>
-      <button class="bar-btn" onclick="showScreen('screen-sum')">‹ Back</button>
+      <button class="bar-btn" onclick="goBackToSummary()">‹ Back</button>
     </div>
   </div>
   <div style="padding:16px 16px 8px;">
@@ -901,8 +901,56 @@ async function viewSavedInspection(insp) {
   results = insp.results||{};
   notes = insp.notes||{};
   photos = insp.photoURLs||{};
-  buildReportBody();
-  showScreen('screen-report');
+  photoFiles = {};
+
+  const inspected = Object.keys(results).length;
+  const total = activeItems.length;
+  const isInProgress = inspected < total;
+
+  if (isInProgress) {
+    // Rebuild checklist and restore state so supervisor can continue
+    buildChecklist();
+    // Restore existing results visually
+    Object.entries(results).forEach(([num, val]) => {
+      const card = document.getElementById('card-'+num);
+      if (!card) return;
+      card.className = 'icard'+(val==='PASS'?' is-pass':val==='FAIL'?' is-fail':' is-na');
+      const btn = card.querySelector('.rbtn:nth-child('+(val==='PASS'?1:val==='FAIL'?2:3)+')');
+      if (btn) btn.classList.add(val==='PASS'?'sel-pass':val==='FAIL'?'sel-fail':'sel-na');
+    });
+    // Restore notes
+    Object.entries(notes).forEach(([num, note]) => {
+      const el = document.getElementById('note-'+num);
+      if (el) el.value = note;
+    });
+    // Restore photos as thumbnails
+    Object.entries(photos).forEach(([num, photoList]) => {
+      if (!photoList || !photoList.length) return;
+      const row = document.getElementById('photos-'+num);
+      if (!row) return;
+      photoList.filter(Boolean).forEach((src, idx) => {
+
+        const wrap = document.createElement('div');
+        wrap.className = 'thumb-wrap';
+        const tImg = document.createElement('img');
+        tImg.className = 'thumb';
+        tImg.src = src;
+        const tBtn = document.createElement('button');
+        tBtn.className = 'thumb-del';
+        tBtn.textContent = '×';
+        (function(n,i){ tBtn.onclick = function(){ removePhoto(n,i); }; })(num,idx);
+        wrap.appendChild(tImg);
+        wrap.appendChild(tBtn);
+        row.appendChild(wrap);        row.appendChild(wrap);
+      });
+    });
+    showScreen('screen-check');
+    showToast('Resuming inspection — ' + inspected + ' of ' + total + ' items done');
+  } else {
+    // Fully complete — show report
+    buildReportBody();
+    showScreen('screen-report');
+  }
 }
 
 function buildChecklist() {
@@ -2027,6 +2075,28 @@ function compressImage(file) {
   });
 }
 
+
+function goBackToChecklist() {
+  // Rebuild checklist if body is empty
+  const body = document.getElementById('checklist-body');
+  if (!body || !body.children.length || activeItems.length === 0) {
+    if (activeItems.length > 0) buildChecklist();
+  } else if (body.children.length !== activeItems.length) {
+    buildChecklist();
+  }
+  showScreen('screen-check');
+  window.scrollTo(0, 0);
+}
+
+function goBackToSummary() {
+  const sumBody = document.getElementById('sum-body');
+  if (!sumBody || !sumBody.children.length) {
+    buildSummary();
+  }
+  showScreen('screen-sum');
+  window.scrollTo(0, 0);
+}
+
 function confirmHome() {
   if(Object.keys(results).length===0){ showScreen('screen-setup'); return; }
   if(confirm('Return to home? Your progress will be lost.')){ results={}; notes={}; photos={}; photoFiles={}; showScreen('screen-setup'); }
@@ -2054,7 +2124,9 @@ window.loadJobs=loadJobs; window.createJob=createJob; window.openJob=openJob;
 window.startNewInspection=startNewInspection; window.beginInspection=beginInspection;
 window.setResult=setResult; window.handlePhotos=handlePhotos; window.removePhoto=removePhoto;
 window.goSummary=goSummary; window.goReport=goReport; window.generateEmail=generateEmail;
-window.confirmHome=confirmHome; window.pinKey=pinKey; window.pinDel=pinDel; window.pinReset=pinReset;
+window.confirmHome=confirmHome;
+window.goBackToChecklist=goBackToChecklist;
+window.goBackToSummary=goBackToSummary; window.pinKey=pinKey; window.pinDel=pinDel; window.pinReset=pinReset;
 window.showAdminScreen=showAdminScreen; window.switchAdminTab=switchAdminTab;
 window.openAddChecklist=openAddChecklist; window.saveNewChecklist=saveNewChecklist;
 window.deleteChecklist=deleteChecklist; window.openEditChecklist=openEditChecklist;
