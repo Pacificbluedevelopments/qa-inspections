@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pacific Blue – QA Inspections</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+button,input,textarea,label,select{font-family:'Poppins',sans-serif;touch-action:manipulation;-webkit-appearance:none;}
+body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A1F24;min-height:100vh;}
+.screen{display:none;}.screen.active{display:block;}
+.bar{background:#333F48;color:#fff;padding:12px 16px;position:sticky;top:0;z-index:50;}
+.bar-row{display:flex;justify-content:space-between;align-items:center;}
+.bar-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.55;font-weight:500;}
+.bar-title{font-size:16px;font-weight:600;margin-top:2px;}
+.bar-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;}
+.prog-wrap{height:2px;background:rgba(255,255,255,.15);margin-top:10px;}
+.prog-fill{height:2px;background:#B7B09C;transition:width .3s;}
+.prog-txt{font-size:11px;opacity:.55;padding:5px 0 10px;}
+.body{padding:20px 16px 48px;}
+.logo-wrap{text-align:center;margin-bottom:24px;padding-top:4px;}
+.logo-img{width:100%;max-width:220px;height:auto;}
+.tagline{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#B7B09C;margin-top:6px;font-weight:500;}
+.card{background:#fff;border-radius:12px;border:1px solid #E4E0DA;padding:18px 16px;margin-bottom:12px;}
+.card-h{font-size:11px;font-weight:600;color:#B7B09C;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;}
+.field{margin-bottom:12px;}.field:last-child{margin-bottom:0;}
+.field label{display:block;font-size:11px;font-weight:600;color:#9A9690;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;}
+.field input,.field select,.field textarea{width:100%;padding:12px 14px;font-size:14px;border:1.5px solid #E4E0DA;border-radius:8px;background:#F7F6F4;color:#1A1F24;outline:none;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#333F48;background:#fff;}
+.field select{background-image:url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%239A9690" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>');background-repeat:no-repeat;background-position:right 14px center;background-color:#F7F6F4;padding-right:36px;}
+.primary-btn{width:100%;padding:16px;background:#333F48;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;letter-spacing:.02em;margin-bottom:10px;}
+.secondary-btn{width:100%;padding:14px;background:#B7B09C;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px;}
+.ghost-btn{width:100%;padding:13px;background:transparent;color:#5C5A57;border:1.5px solid #E4E0DA;border-radius:10px;font-size:14px;cursor:pointer;margin-bottom:10px;}
+.admin-link{text-align:center;margin-top:8px;margin-bottom:0;}
+.admin-link button{background:none;border:none;color:#9A9690;font-size:12px;cursor:pointer;font-family:'Poppins',sans-serif;text-decoration:underline;}
+
+/* JOB LIST */
+.job-item{background:#fff;border-radius:10px;border:1px solid #E4E0DA;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.job-item:active{background:#F7F6F4;}
+.job-info .job-addr{font-size:14px;font-weight:600;color:#1A1F24;}
+.job-info .job-num{font-size:12px;color:#9A9690;margin-top:2px;}
+.job-arrow{font-size:20px;color:#B7B09C;}
+.job-count{font-size:11px;color:#B7B09C;margin-top:3px;}
+.empty-state{text-align:center;padding:48px 16px;color:#9A9690;}
+.empty-state .es-icon{font-size:48px;margin-bottom:12px;}
+.empty-state .es-title{font-size:16px;font-weight:600;color:#5C5A57;margin-bottom:6px;}
+.empty-state .es-sub{font-size:13px;line-height:1.6;}
+
+/* INSPECTION LIST */
+.insp-item{background:#fff;border-radius:10px;border:1px solid #E4E0DA;padding:14px 16px;margin-bottom:10px;cursor:pointer;}
+.insp-item:active{background:#F7F6F4;}
+.insp-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;}
+.insp-type{font-size:14px;font-weight:600;color:#1A1F24;}
+.insp-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;}
+.insp-badge.pass{background:#E8F0E8;color:#1E4D1E;border:1px solid #4A7C4A;}
+.insp-badge.fail{background:#F5E8E5;color:#6B2318;border:1px solid #A84232;}
+.insp-badge.partial{background:#FFF3E0;color:#7A4000;border:1px solid #E07800;}
+.insp-meta{font-size:12px;color:#9A9690;}
+
+/* CHECKLIST */
+.icard{background:#fff;border-bottom:1px solid #E4E0DA;padding:16px;border-left:3px solid transparent;}
+.icard.is-pass{border-left-color:#4A7C4A;}.icard.is-fail{border-left-color:#A84232;}.icard.is-na{border-left-color:#8A8278;}
+.inum{font-size:11px;color:#9A9690;font-weight:600;margin-bottom:3px;letter-spacing:.04em;}
+.iname{font-size:15px;font-weight:600;margin-bottom:4px;letter-spacing:-.01em;}
+.ireq{font-size:13px;color:#5C5A57;line-height:1.6;margin-bottom:14px;}
+.btn-row{display:flex;gap:8px;margin-bottom:14px;}
+.rbtn{flex:1;padding:13px 4px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid #E4E0DA;background:#F7F6F4;color:#9A9690;display:flex;align-items:center;justify-content:center;gap:5px;}
+.rbtn.sel-pass{background:#E8F0E8;border-color:#4A7C4A;color:#1E4D1E;}
+.rbtn.sel-fail{background:#F5E8E5;border-color:#A84232;color:#6B2318;}
+.rbtn.sel-na{background:#F0EDE8;border-color:#8A8278;color:#4A4540;}
+.note-label{display:block;font-size:11px;font-weight:600;color:#9A9690;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;}
+.note-field{width:100%;padding:11px 12px;font-size:13px;line-height:1.6;border:1.5px solid #E4E0DA;border-radius:8px;background:#F7F6F4;color:#1A1F24;resize:none;min-height:72px;outline:none;margin-bottom:12px;}
+.photo-label-btn{display:inline-flex;align-items:center;gap:8px;background:#F0EDE8;border:1.5px solid #DDD9D2;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;color:#333F48;cursor:pointer;}
+.photos-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.thumb-wrap{position:relative;display:inline-block;}
+.thumb{width:72px;height:72px;object-fit:cover;border-radius:8px;border:1.5px solid #E4E0DA;display:block;}
+.thumb-del{position:absolute;top:-7px;right:-7px;width:22px;height:22px;background:#333F48;border:2px solid #fff;border-radius:50%;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;line-height:1;}
+
+/* SUMMARY */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.stat-card{background:#fff;border:1px solid #E4E0DA;border-radius:12px;padding:14px;text-align:center;}
+.stat-val{font-size:30px;font-weight:700;letter-spacing:-.02em;}
+.stat-lbl{font-size:10px;color:#9A9690;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-top:2px;}
+.verdict{border-radius:10px;padding:15px 16px;margin-bottom:18px;border:1.5px solid;}
+.verdict.vpass{background:#E8F0E8;border-color:#4A7C4A;}.verdict.vpass .vl,.verdict.vpass .vr{color:#1E4D1E;}
+.verdict.vfail{background:#F5E8E5;border-color:#A84232;}.verdict.vfail .vl,.verdict.vfail .vr{color:#6B2318;}
+.vl{font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:3px;}
+.vr{font-size:17px;font-weight:700;letter-spacing:-.01em;}
+.meta-card{background:#fff;border:1px solid #E4E0DA;border-radius:12px;padding:4px 16px;margin-bottom:18px;}
+.meta-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #E4E0DA;font-size:13px;}
+.meta-row:last-child{border-bottom:none;}
+.meta-k{color:#9A9690;font-weight:500;font-size:12px;}
+.meta-v{font-weight:600;text-align:right;max-width:60%;}
+.action-card{background:#fff;border:1.5px solid #DDD9D2;border-radius:12px;padding:18px 16px;margin-bottom:14px;}
+.action-card h3{font-size:14px;font-weight:700;color:#333F48;margin-bottom:3px;}
+.action-card p{font-size:12px;color:#5C5A57;margin-bottom:14px;line-height:1.6;}
+
+/* REPORT SCREEN */
+#report-body{background:#fff;}
+
+/* ADMIN */
+.admin-item{background:#fff;border-radius:10px;border:1px solid #E4E0DA;padding:14px 16px;margin-bottom:10px;}
+.admin-item-header{display:flex;justify-content:space-between;align-items:center;}
+.admin-item-name{font-size:14px;font-weight:600;color:#1A1F24;}
+.admin-item-desc{font-size:12px;color:#9A9690;margin-top:3px;line-height:1.5;}
+.admin-btns{display:flex;gap:8px;margin-top:10px;}
+.edit-btn{flex:1;padding:8px;background:#F0EDE8;border:1px solid #DDD9D2;border-radius:7px;font-size:12px;font-weight:600;color:#333F48;cursor:pointer;}
+.del-btn{padding:8px 12px;background:#F5E8E5;border:1px solid #A84232;border-radius:7px;font-size:12px;font-weight:600;color:#A84232;cursor:pointer;}
+.checklist-section{margin-bottom:20px;}
+.checklist-section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.checklist-section-title{font-size:13px;font-weight:700;color:#333F48;text-transform:uppercase;letter-spacing:.06em;}
+.add-item-btn{background:#333F48;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;}
+.pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:32px 16px;}
+.pin-dots{display:flex;gap:16px;margin:24px 0;}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid #B7B09C;background:transparent;transition:background .15s;}
+.pin-dot.filled{background:#333F48;border-color:#333F48;}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px;}
+.pin-key{padding:18px;background:#fff;border:1.5px solid #E4E0DA;border-radius:12px;font-size:22px;font-weight:600;cursor:pointer;text-align:center;color:#1A1F24;}
+.pin-key:active{background:#F0EDE8;}
+.pin-key.del{font-size:16px;color:#9A9690;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:#fff;border-radius:16px 16px 0 0;padding:24px 16px 40px;width:100%;max-width:480px;}
+.modal-title{font-size:16px;font-weight:700;color:#1A1F24;margin-bottom:16px;}
+.modal-field{margin-bottom:12px;}
+.modal-field label{display:block;font-size:11px;font-weight:600;color:#9A9690;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;}
+.modal-field input,.modal-field textarea{width:100%;padding:12px 14px;font-size:14px;border:1.5px solid #E4E0DA;border-radius:8px;background:#F7F6F4;color:#1A1F24;outline:none;}
+.modal-field textarea{resize:none;min-height:80px;line-height:1.5;}
+.modal-btns{display:flex;gap:10px;margin-top:16px;}
+.modal-save{flex:1;padding:14px;background:#333F48;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;}
+.modal-cancel{padding:14px 20px;background:transparent;color:#9A9690;border:1.5px solid #E4E0DA;border-radius:10px;font-size:14px;cursor:pointer;}
+
+/* LOADING */
+.loading{text-align:center;padding:48px 16px;color:#9A9690;font-size:14px;}
+.spinner{width:32px;height:32px;border:3px solid #E4E0DA;border-top-color:#333F48;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#333F48;color:#fff;padding:12px 20px;border-radius:24px;font-size:13px;font-weight:500;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:90%;text-align:center;}
+.toast.show{opacity:1;}
+
+
+
+
+  body{background:#fff;}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="screen-setup" class="screen active">
+  <div style="background:#333F48;height:8px;"></div>
+  <div class="body">
+    <div class="logo-wrap">
+      <img class="logo-img" src="data:image/jpeg;base64,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zOLW9hfzI1G4naHRyoAxyo9K9h+C/gnUfBGm6/a6jd2ly2pa7c6lEbfdhY5CuFbcB8wxzjiuSt/g1qTfDzxXoFzqlkmp6h4il13SbuHfi0l3K0RbIzkFSDjPBOK25o3Zjyysji/2ivFmt6n8QdPttD1K6tNF8O6xYWN61vO0YuLy5fcYyVI3BI0GQe7mu4/a8l1FPhvpUGl6ldadcXfiC1thPBM0TAOJF5KkHGSDj2qG9+DWry/DHRPDy6tZS61F4ji17V76bftupt7NIVwM55AGQOF7V1/xu8E6j478OaVpmm3dpbSWetW2oO1xu2skRYlRtB+Y547Uc0U15Byys/Mw/DHxQFj8E9S8ReIxnWvDXm6dqlvn5pL2E+Wqj/roShH+/XN/spyeJk8S/EGw8V6ndXupW1zaNOss7OsUkiSSOqAkhQC2MDA+Wt7xN8HZtW+MEPieLUoYvDdxcW9/q2lkHNzeW4YQvjGMcqTnrt7546L4d+CNR8N+PfHXiG7u7Sa38R3kFxbRxbt8SojKQ+RjPPbNDceV26jSldX6Hissvg25+NXxFi8cjxRdJDf24sE01r51iBi+cEW5wuTtxn3x3r2HxNDpunfs86wvh37fb2C6Bcy2huJJvPRWiZhuMh8wNz/FyKxbTwT8S/D3xD8XeI/C174RktfEV1FMY9SFyXjEabQP3eB3Pr2rtdb0fxF4g+F2paFrE2lR65qGnT20klqJBaq7qyqRuy+3BGe/WiUlpqKMWrnzDDP4IT4Tadd+F/FXiVviW1jDJBbWGo3k0sl0cblMRym3Oc9h/P3v4tWvxD1L4FmHQGli8UyWls14lrII5WOFM6RN0DH5sYPqB2rNvvhNrEfgnwY2iatZWHjTwpbxQ29+A/kToABLDIANxiYZ4xx+JrvvGmiav4i8GT6XZ67c+HtVljRkvbByTDKMHjOCyE5BBwSD2NEpptMIwaTPFfh1/wAIAPHOhR+HvEPivwT4giIW90PWmnJ1MY+ZGExKM3XDIc9wK2f2r7i3huPAMd/NqC6bNr4S+SyeVZJIfLO5QIjvY46Ac+lXdU+HfxE8Y6z4Ybx1rPhkWGgXqXol0u3mF1dSJjAYvxGCRkhc/oMdB8aPBPiHxXd+FdQ8N3el295oGqjUQNQ8zy5CFwF+QZ69enFHMuZO4WfK1Yq/Bez+H41LUbvwba+JIZ0hSK4Oq/blUqzEjaLk4JyvJXkd+teoVyvgwfEUX8//AAmLeFTZ+V+5/spbgSeZn+LzDjbjPTnNdVWctWaR2CiiipKCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP/9k=" alt="Pacific Blue Building">
+      <div class="tagline">Quality Assurance Inspections</div>
+    </div>
+    <button class="primary-btn" onclick="showScreen('screen-jobs');loadJobs()">View jobs</button>
+    <button class="secondary-btn" onclick="showScreen('screen-new-job')">+ New job</button>
+    <div class="admin-link"><button onclick="showScreen('screen-pin')">Admin</button></div>
+  </div>
+</div>
+
+<!-- NEW JOB SCREEN -->
+<div id="screen-new-job" class="screen">
+  <div class="bar">
+    <div class="bar-row">
+      <div><div class="bar-label">Pacific Blue Building</div><div class="bar-title">New Job</div></div>
+      <button class="bar-btn" onclick="showScreen('screen-setup')">Cancel</button>
+    </div>
+  </div>
+  <div class="body">
+    <div class="card">
+      <div class="card-h">Job details</div>
+      <div class="field"><label>Lot / Address</label><input id="nj-addr" type="text" placeholder="e.g. 14 Sunrise Ct, Noosa"></div>
+      <div class="field"><label>Job number</label><input id="nj-job" type="text" placeholder="e.g. PB-2024-047"></div>
+      <div class="field"><label>Client name</label><input id="nj-client" type="text" placeholder="e.g. Smith Family"></div>
+    </div>
+    <button class="primary-btn" onclick="createJob()">Create job</button>
+    <button class="ghost-btn" onclick="showScreen('screen-setup')">Cancel</button>
+  </div>
+</div>
+
+<!-- JOBS LIST SCREEN -->
+<div id="screen-jobs" class="screen">
+  <div class="bar">
+    <div class="bar-row">
+      <div><div class="bar-label">Pacific Blue Building</div><div class="bar-title">Jobs</div></div>
+      <button class="bar-btn" onclick="showScreen('screen-setup')">‹ Home</button>
+    </div>
+  </div>
+  <div class="body">
+    <button class="primary-btn" onclick="showScreen('screen-new-job')" style="margin-bottom:20px;">+ New job</button>
+    <div id="jobs-list"><div class="loading"><div class="spinner"></div>Loading jobs…</div></div>
+  </div>
+</div>
+
+<!-- JOB DETAIL SCREEN -->
+<div id="screen-job-detail" class="screen">
+  <div class="bar">
+    <div class="bar-row">
+      <div><div class="bar-label" id="jd-label">Pacific Blue Building</div><div class="bar-title" id="jd-title">Job</div></div>
+      <button class="bar-btn" onclick="showScreen('screen-jobs');loadJobs()">‹ Jobs</button>
+    </div>
+  </div>
+  <div class="body">
+    <div class="card" id="jd-meta" style="margin-bottom:20px;"></div>
+    <button class="primary-btn" onclick="startNewInspection()">+ New inspection</button>
+    <div style="font-size:11px;font-weight:700;color:#9A9690;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Previous inspections</div>
+    <div id="inspections-list"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+  </div>
+</div>
+
+<!-- NEW INSPECTION SETUP -->
+<div id="screen-insp-setup" class="screen">
+  <div class="bar">
+    <div class="bar-row">
+      <div><div class="bar-label">Pacific Blue Building</div><div class="bar-title">New Inspection</div></div>
+      <button class="bar-btn" onclick="showScreen('screen-job-detail')">Cancel</button>
+    </div>
+  </div>
+  <div class="body">
+    <div class="card">
+      <div class="card-h">Inspection type</div>
+      <div class="field">
+        <label>Select checklist</label>
+        <select id="f-type"></select>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h">Personnel</div>
+      <div class="field"><label>Inspector</label><input id="f-ins" type="text" placeholder="e.g. Josh M"></div>
+      <div class="field"><label>Supervisor</label><input id="f-sup" type="text" placeholder="e.g. Brett K"></div>
+      <div class="field"><label>Subcontractor</label><input id="f-sub" type="text" placeholder="e.g. Sunshine Coast Concrete"></div>
+    </div>
+    <button class="primary-btn" onclick="beginInspection()">Begin inspection</button>
+    <button class="ghost-btn" onclick="showScreen('screen-job-detail')">Cancel</button>
+  </div>
+</div>
+
+<!-- CHECKLIST SCREEN -->
+<div id="screen-check" class="screen">
+  <div class="bar">
+    <div class="bar-row">
+      <div><div class="bar-label">Pacific Blue Building</div><div class="bar-title" id="check-bar-title">Inspection</div></div>
+      <div style="display:flex;gap:8px;">
+        <button class="bar-btn" onclick="confirmHome()">⌂</button>
+        <button class="bar-btn" onclick="goSummary()">Finish ›</button>
+      </div>
+    </div>
+    <div class="prog-wrap"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+    <div class="prog-txt" id="prog-txt">0 items</div>
+  </div>
+  <div id="checklist-body"></div>
+</div>
+
+<!-- SUMMARY SCREEN -->
+<div id="screen-sum" class="screen">
+  <div class="bar">
+    <div class="bar-row">
+      <div><div class="bar-label">Pacific Blue Building</div><div class="bar-title">Summary</div></div>
+      <button class="bar-btn" onclick="showScreen('screen-check')">‹ Back</button>
+    </div>
+  </div>
+  <div class="body" id="sum-body"></div>
+</div>
+
+<!-- REPORT SCREEN -->
+<div id="screen-report" class="screen">
+  <div class="bar">
+    <div class="bar-row">
+      <div><div class="bar-label">Pacific Blue Building</div><div class="bar-title" id="report-bar-title">Report</div></div>
+      <button class="bar-btn" onclick="showScreen('screen-sum')">‹ Back</button>
+    </div>
+  </div>
+  <div style="padding:16px 16px 8px;">
+    <button class="primary-btn" onclick="printReport()" style="margin-bottom:10px;">Print / save as PDF</button>
+    <button class="secondary-btn" onclick="generateEmail()">Send email via Outlook</button>
+  </div>
+  <div id="report-body"></div>
+  <div style="padding:16px;">
+    <button class="primary-btn" onclick="printReport()" style="margin-bottom:10px;">Print / save as PDF</button>
+    <button class="secondary-btn" onclick="generateEmail()">Send email via Outlook</button>
+    <button class="ghost-btn" onclick="showScreen('screen-sum')" style="margin-top:4px;">‹ Back to summary</button>
+  </div>
+</div>
+
+<!-- PIN SCREEN -->
+<div id="screen-pin" class="screen">
+  <div class="bar">
+    <div class="bar-row">
+      <div><div class="bar-label">Pacific Blue Building</div><div class="bar-title">Admin Access</div></div>
+      <button class="bar-btn" onclick="showScreen('screen-setup');pinReset()">Cancel</button>
+    </div>
+  </div>
+  <div class="pin-screen">
+    <div style="font-size:15px;font-weight:600;color:#333F48;">Enter PIN</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div id="pin-error" style="color:#A84232;font-size:13px;margin-bottom:12px;height:18px;"></div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <div></div>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key del" onclick="pinDel()">⌫</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN SCREEN -->
+<div id="screen-admin" class="screen">
+  <div class="bar">
+    <div class="bar-row">
+      <div><div class="bar-label">Pacific Blue Building</div><div class="bar-title">Admin Panel</div></div>
+      <button class="bar-btn" onclick="showScreen('screen-setup')">Exit</button>
+    </div>
+  </div>
+  <div class="body">
+    <div style="display:flex;gap:0;margin-bottom:20px;border:1.5px solid #E4E0DA;border-radius:10px;overflow:hidden;">
+      <button id="tab-checklists" onclick="switchAdminTab('checklists')" style="flex:1;padding:12px;background:#333F48;color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;">Checklists</button>
+      <button id="tab-jobs" onclick="switchAdminTab('jobs')" style="flex:1;padding:12px;background:#F7F6F4;color:#5C5A57;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;">Jobs</button>
+    </div>
+    <div id="admin-tab-checklists">
+      <div style="background:#fff;border-radius:12px;border:1px solid #E4E0DA;padding:16px;margin-bottom:20px;">
+        <div style="font-size:14px;font-weight:700;color:#333F48;margin-bottom:4px;">Email CC recipients</div>
+        <div style="font-size:12px;color:#9A9690;margin-bottom:14px;">These addresses are automatically CC'd on every inspection report email.</div>
+        <div class="field" style="margin-bottom:10px;"><label>CC 1</label><input id="cc-email-1" type="email" inputmode="email" placeholder="e.g. Cameron@pacific-blue.com.au"></div>
+        <div class="field" style="margin-bottom:10px;"><label>CC 2</label><input id="cc-email-2" type="email" inputmode="email" placeholder="Optional"></div>
+        <div class="field" style="margin-bottom:14px;"><label>CC 3</label><input id="cc-email-3" type="email" inputmode="email" placeholder="Optional"></div>
+        <button class="primary-btn" style="margin-bottom:0;" onclick="saveCCEmails()">Save CC emails</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div style="font-size:14px;font-weight:700;color:#333F48;">Checklists</div>
+        <button class="add-item-btn" onclick="openAddChecklist()">+ New checklist</button>
+      </div>
+      <div id="admin-checklists"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+    </div>
+    <div id="admin-tab-jobs" style="display:none;">
+      <div style="font-size:14px;font-weight:700;color:#333F48;margin-bottom:16px;">Jobs</div>
+      <div id="admin-jobs-list"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN CHECKLIST EDITOR -->
+<div id="screen-admin-edit" class="screen">
+  <div class="bar">
+    <div class="bar-row">
+      <div><div class="bar-label">Admin</div><div class="bar-title" id="edit-bar-title">Edit Checklist</div></div>
+      <button class="bar-btn" onclick="showAdminScreen()">‹ Back</button>
+    </div>
+  </div>
+  <div class="body">
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-h">Checklist name</div>
+      <div class="field"><input id="edit-cl-name" type="text" placeholder="e.g. Frame Inspection"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:700;color:#333F48;">Items</div>
+      <button class="add-item-btn" onclick="openAddItem()">+ Add item</button>
+    </div>
+    <div id="edit-items-list"></div>
+    <div style="margin-top:20px;">
+      <button class="primary-btn" onclick="saveChecklist()">Save checklist</button>
+      <button class="ghost-btn" onclick="showAdminScreen()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN INSPECTIONS -->
+<div id="screen-admin-inspections" class="screen">
+  <div class="bar">
+    <div class="bar-row">
+      <div><div class="bar-label">Admin</div><div class="bar-title" id="admin-insp-title">Inspections</div></div>
+      <button class="bar-btn" onclick="showAdminScreen();switchAdminTab('jobs')">‹ Back</button>
+    </div>
+  </div>
+  <div class="body">
+    <div style="font-size:12px;color:#9A9690;margin-bottom:16px;">Tap delete to permanently remove an inspection record.</div>
+    <div id="admin-insp-list"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-checklist">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-cl-title">New Checklist</div>
+    <div class="modal-field"><label>Checklist name</label><input id="modal-cl-name" type="text" placeholder="e.g. Roof Inspection"></div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('modal-checklist')">Cancel</button>
+      <button class="modal-save" onclick="saveNewChecklist()">Create</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-job">
+  <div class="modal-box">
+    <div class="modal-title">Edit Job</div>
+    <div class="modal-field"><label>Lot / Address</label><input id="modal-job-addr" type="text" placeholder="e.g. 14 Sunrise Ct, Noosa"></div>
+    <div class="modal-field"><label>Job number</label><input id="modal-job-num" type="text" placeholder="e.g. PB-2024-047"></div>
+    <div class="modal-field"><label>Client name</label><input id="modal-job-client" type="text" placeholder="e.g. Smith Family"></div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('modal-job')">Cancel</button>
+      <button class="modal-save" onclick="saveJobEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-item">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-item-title">Add Item</div>
+    <div class="modal-field"><label>Item name</label><input id="modal-item-name" type="text" placeholder="e.g. Rafter spacing"></div>
+    <div class="modal-field"><label>Description / requirement</label><textarea id="modal-item-desc" placeholder="e.g. Rafters at correct spacing per approved drawings"></textarea></div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('modal-item')">Cancel</button>
+      <button class="modal-save" onclick="saveItem()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- FIREBASE -->
+</script>
+<!-- Firebase compat SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBZFQgLMLKQF80_CMYqSq5ZcbJM0_H9w2M",
+  authDomain: "pacific-blue-qa.firebaseapp.com",
+  projectId: "pacific-blue-qa",
+  storageBucket: "pacific-blue-qa.firebasestorage.app",
+  messagingSenderId: "136808210337",
+  appId: "1:136808210337:web:ae0fb3aff55195168f35e0"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+const ADMIN_PIN = "1234"; // Change this to your preferred PIN
+const LOGO = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAB2AeADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD7LooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKK4vx5NfNrmmWFpezWyzjblHIGSwGTjrUTnyq4M7SiuK/4RTX/wDoZJf++pP/AIqg+FfEK/MniOXcOmXkH9an2kv5RXO1oriLHXNY0LUo9P8AEX72CQ4S464989x655FdvVQmpDCiiirAKK4Lx9rt3Dq8Vnp9xJH9lAklKHGWPIB9gMfnXZ6Rex6jpsF7F92VA2PQ9x+ByKiNRSk4roFy1RRRVgFFNkdI42kkYKiglmJwAPWuKvPEWr61evZeG4SsS/euGHOPXJ4Ufqaic1ELnb0VxP8AwjPiZv3reInEvp5kmPz/APrVGNY8R+HZ0TWovtloxwJVwT+Devsaj2tviVhXO6oqCwu7e+tI7q1kEkUgypH+etT1tuMKK5D4iXNxb3WkiC4liDysGCOV3cp1x1rr6lSu2uwBRRXE+OZL6XxLp2nWt9NbLPGB8jkAEsRk469KU58iuB21FcT/AMInr3/Qxy/99Sf/ABVH/CJ69/0Mcv8A31J/8VUe0n/KK521FYXhfR9Q0yad73U3vFkUBQxY7SCfUmt2tIttXaGFFcd46ubmDXNHSG4liV5MOqOQG+deuOtdjQpXbXYAoorL8R63a6LZ+dP88jcRRA8uf6D1NNtJXYGpRXCwR+L/ABAPtH2r+zrVuUAJTI9gPmP1JFPfQfFtiPOstaa5Yc+W0h5/Bsg1l7VvVRdhXO3orlfDnil57z+y9Yg+y3oO1SRtDH0I7H9DXVVpGakroYUUHoa8Bsb/AOLfjX4keONN8O+PrPQrDQdSW1igk0mOfKsmR8xGex6561pGNyZSse/UV40fBXx3J/5LFp//AIIIqoan4n+MPwvC6r43XTfGXhdWAu77TbfyLu0U8b2j4DKP8kU+S+zFz23R7pRVTRtSsdZ0m11XTLlLmyu4lmglQ8OjDINW6gsKK8+/aO1fU9B+CfiXV9GvprC/trdGhuITh0JlQEg/QkfjXX+FZpbnwzpdxPI0kstnC7u3VmKKST+NO2lxX1saVFFFIYUUV5V8V9e1nTfjD8MtJsNSuLax1O7u1vYIyAs4WNSobjsacVd2E3ZHqtFA6CikMKK8q/aH17WtD/4QgaPqdxY/bvE9ra3XkkDzYWzuQ5HQ16qKbVkmJO7sFFFec+MPhrq+v+IrrVrb4neMtFin27bKwukSCLChflBUkZxk+5NCSe4NtbHo1FeR/wDCnde/6LP8Q/8AwNT/AOJo/wCFO69/0Wf4h/8Agan/AMTVcse5PNLseuUVxPw98Dal4V1G5u73x54n8RpNCI1g1S4WRIiGzuUADnt9K7apfkUvMKKKKQwooooAK4rxn/yOWh/76/8AowV2tcJ8QTcL4m0prRQ1wFBiB6Ft/A/Osa/wiZ3dFcX9r8e/8+MH/fKf/FUn2nx83yizgUnvhOP/AB6n7Xyf3Bcm+Kclv/Y8ETYM7TZjHfABz+HIrptLWRNMtUmz5iwoHz67RmuZ0bwveTaiuqeILkXM6kFIgcgEdMnpgeg4rr6IJuTkwQVX1O7jsNPnvJvuQoWPv6D8elWK434i3clxLZ6DanMtw4ZwPrhQfxyfwqqkuWNxsh8D6X/adrqWp6gu5r7dECfQn5iPxwP+A1J8PbmWyvL3w/dHEkLl4/fs2P0P4mus020isbCCzhGEiQKPf3rkfHEUmk67Y+IbdTjcEmA7kf4rkfgKycPZpS7bi2O2oplvLHPBHNEwaORQyn1B5FProGcj8R72b7PbaRbf628f5gO65AA/En9K6DQtMg0nTo7SAD5Rl27u3cmuY8R8/EXSRJ90Km365b+uK7WsYazkxBUV5bQ3lrJbXEYkikXaynuKlorYZjeF9DfQ4poRetcQyNuVWTbsPfv34/KtmiilGKirIDiviX/x+aP/ANdW/mldrXFfEv8A4/NH/wCurfzSu1rOHxy+QuoVxfir/kf9E+if+hmu0rg/HjXS+LtMayUNciNTED0LbzilW0iDO8FFcV9q8e/8+MH/AHyn/wAVVrSbjxk+pQLf2kKWpb96wC5AwfRqaq36MLnV0UUVqM4n4gf8h/RP+un/ALOtdtXE/ED/AJD+if8AXT/2da7asofHISCuD0uIeJvGNze3A32dmdsaHocEhR+JBY13FyWFvIV+9sOPriuR+FQX+y7w/wAZnG7/AL5H/wBelU1lGIM7KiiithmJ4n8Owa35UgmNtcRHiVVySPTt35HpWxbrIkEaSyeZIqgM+Mbj647U+ipUUncAPQ1418Bv+Sr/ABe/7DsP/opq9lPQ18yeD7/4lWvxc+KI+H+i6BqMba2n2w6ncvEUYIQu3aeQRnNbQV0zObs0fTdZvimbTYPDWpzayYxpyWkpuvM+75Ww78+2M15Z/bX7R/bwd4E/8GEv+NedfFa0+N+sJBN8QdAa68HQSCXUNN8MXKh5EXn5skuwGMntx2OCCNPXcJVNNj1H9keO8j+BGh/aw4jZ7hrUP1EJmfZ/WvWa5z4a+IPDPiXwZp+peEZIjpIiEMMSLsMGwAeUy/wleBj6dQQa6Opm7ybKirRR5h+1Z/yb54t/69o//R0ddz4M/wCRQ0b/AK8IP/Ra1w37Vn/Jvni3/r2j/wDR0ddz4M/5FDRv+vCD/wBFrTfwL1Evjfoa1FFFQWFeM/Gf/kvHwh/6/L7/ANFLXs1eM/Gf/kvHwh/6/L7/ANFLV09yJ7fcezDoKKB0FFQWeL/tSdfh5/2OFn/7NXtArxn9qD/WfDr/ALHGz/8AZq9mFXL4URH4mFFFed+L5fjQviK6Xwpa+CX0f5fs7ahJcCc/KN27Z8v3s4x2xUpXKbseiUV5J5/7RP8Az5fDf/v7dUef+0T/AM+Xw3/7+3VVyeZPP5HrdFcV8PpPii+o3I8d2/hWOz8kfZzpLzGQybud3mcbceneu1qWrFJ3CiiikMKKKKACuK8Zf8jnof8AvL/6MFdrXF+MVY+MtDIUkBl5A/6aCsq3wiZ2lFFFajCiiigBs0iRRPLIwVEUsxPYDrXE+DI31nxJe+IJ1OxGKwg9iRgfkv8AOtD4jX72+kLYwBmlu22kKMnYOv58D8a1/DenDS9Gt7TA3hd0h9XPJ/w/CsX707dhdTRqh4g09dU0i4smwGdfkJ7MOQfzq/RWrV1ZjOU+HGoNLpsumT5E9m2Ap67Sen4HI/Kurrh9YVtA8cQakisLW84lwDgZwG/XDfnXcCs6T05X0EjjviPazRGy1q2Hz2sgDH0GQVP0zx+NdPpN9BqWnxXlu2UkXOO6nuD7ip7iGK4geCdFkjkUqynoQa4iXStd8MXclxou68snOWhI3EfUdfxH40neEubowO6pk0scMTyyuEjQFmYnAAHeuMHjqcLsfQ5hN0xvOM/985qGSDxN4pdUuo/7O0/IJUqRn8Dyx+uBQ6yfw6sLnS+Htdg1szm1t50jiIBkkAAJPYc+nNa9VdJ0+20yxSztU2xp3PVj3J96tVpG9tdxnFfEv/j80f8A66t/NK7WuL+JSsbvR8KTiVugz3Su0qIfHL5C6hXF+Kv+R/0T6J/6Ga7SuM8Uqx8e6KQpIATJx/tmit8PzQM7OigUVqMKKKKAOJ+IH/If0T/rp/7OtdtXFeP1Y6/opCk4k5wP9ta7WsofHISCuE8Oyjw94vvNKuDst7pswsemckr+YJH1Fd3WN4q0CDW7UAsIrmPPlS4/Q+1OpFuzW6BmzRXCQa14k0BRbappz3kKcLKCSSP94Ag/jzUj+MtTvB5Wl6JKZTxubL4/AAfqan20eu4XOi8Ra7Z6JDG9yHd5DhY48biO557Vo2spnto5mieIuobY/wB5c9j71ymheGry41Aav4il86fIZIScgHtnHHHoOK6+qg5PVgB6GvF/gD/yVj4wf9h2H/0B69oPQ1866HqnjX4ffE/4hXUPwx8R6/a63qq3FtcWYUR7FUjOT1zu/SuiCumiJuzTPoqg9K8a/wCFweOP+iGeMf8AvuP/AAqC7+IXxi8RRHTvC3wnutBuZPlOoa5dIIoAf4ggGWI69/oaXs2P2iD4Pww6P+0J8TdA0YKujYtL1okH7uG6kXLgAcDOTx7D0r2yuG+Dnw/j8BaFcrdX8mq65qc5u9W1GT71xMfT0UZOPqT3xXc0pu70HBWR5h+1Z/yb54t/69o//R0ddz4M/wCRQ0b/AK8IP/Ra1x/7TOn32qfAvxTYabZz3l1LbJ5cMEZd2xKhOFHJwATx6VyWg/HGHT9DsLCX4bfEFpLa2jhZl0g4JVQCRz04qlFyhoS5JT1Pc6K8a/4X5bf9E0+In/gn/wDsq6X4dfE+Hxnrkulx+D/FejGO3afz9UsPJibDKNobJ+b5s49AaThJalKcWegV4t8fpU0v4p/CjxDeHy9Pt9XntZ5jwsbTRqqZPYcH8q9prn/iJ4Q0jxz4SvPDetRs1tcqNrpw8LjlZFPZgf6g8GlB2eoSV1odAOgorwrS/EPxc+GUK6L4k8KXfjvR7cbLXV9JbN15Y6CWI8kgd/1brVuf4z+KtWQ2vhD4QeLbm+f5VfU4RaW8berMT0/EfWn7N9Be0XUX9o6VNQ8YfDHw1bEPfz+JYr3y15Kwwgl3I9Of0PpXtIryv4U/DrW7PxNc/ED4g6jDqfi27i8mJIB/o+nQn/llF79ifr1ySfVKJNaJBG+rYUUV534v+K1p4b8RXWjSeC/G2ovb7c3On6QZoH3KG+V9wzjOD7g1KTexTaW56JRXkv8AwvKx/wCic/Ej/wAEJ/8AiqP+F5WP/ROfiR/4IT/8VVezl2J54nrVFcV8PviHb+MdRubKHwt4q0c28IlMmraabeN8tjapyct3x6V2tS01uUmnsFFFFIYUUUUAFFFFABRRRQAUUUUAFFFFABRRRmgAoooz9fyoAKKKM0AFFFFABRRmigAooooAKKKKACijNFABRRRQAUUUUAFFFGaACijNGaACijNFABRgelFFABgelGBRmigAoozRmgAoxRRQAYooooAKKKKACjFFFABRRmigAoozRQAYoxRmigAoozRQAUUUUAFFFFABXG+PPiJpng/UoLC+0XxJfvPD5yvpulSXSKNxGGZeAeOnpXZUYpq3UTv0PK/+F4+H/wDoVPHn/hOT/wCFH/C8fD//AEKnjz/wnJ/8K9Ux9fzox9fzqrx7E2l3PK/+F4+H/wDoVPHn/hOT/wCFH/C8fD//AEKnjz/wnJ/8K9Ux9fzox9fzovHsFpdzyv8A4Xj4f/6FTx5/4Tk/+Fafhf4saN4h1+10a28PeL7Wa5Yqst5ok0EK4Ut8ztwvT88V6Dj6/nRilePYdpdzzf8AacnntvgP4suLaaWCZLNSkkblWU+YnQjkVzelfBvTbjwXYat4d8S+KdD12Wwinju49ZnkTzWjDfPG7FSpJ5GOld/8YvC1541+Gmt+FrC4gt7nUYBFHLPnYp3q3OAT0BriR4Q+Nd7oEHhq68YeFNH01bdbV7nTLCZ7rygoX5TIwUMQOv5VcX7u5El72xsfBXxlqPjf4MRa5qwQaksdxbXTxjaskkRZS4A6ZwDx3zivE/gdH8N9V8FaJ/wlEXjO71+4lMcs0D6m0BYzEJ88Z8vAG3Jzgc5719J+EfCGmeE/Alv4S0NWS1trd4kaU5Z2bJZ2I6ksST+ledfDTwf8Y/AnhDT/AAvp174DubKyL7ZJ1uzIQ7l26YHVjjimpLWwnF6XNb9pSx8XX/gyxTwvFqdzbR6jE+r2umTeVd3FoM70jYc5zjgc/Xmub+EDeAn+IkTeCvFWv6JOLZ1vvCmrecGnIBxIFnJIZeuUJ6HtmvTviX4f17xBoUUPhrxPc+HtUtrhLiG4jG6OQr/yzlT+JD3H/wCquNtPh/421/4l+H/GHjrUfDsQ8PpJ9kg0aGUNO7jBMjychR12jPf1NKLXLZjknzXI/iFc3Ef7Svw0t0uJkhltdSMkayEI+IuMrnBx70z4zaprutfErwr8LtH1m60K21aCe91K+tG2ztBHn91G38JODkj1HbIPTeKvBWoat8XvB/jKC7tY7LQ4LuOeF93mSGZNq7cDHHfJpPir8PpvFd3pGv6HrDaH4n0SRn0++EQkQhhh4pE/iRv8fUihNaA07M8n8aaN4F8D6hIvhb4h+KPDPiTTZEeaW6W/v7SUYDMJlKlGBU9QeP5d/wDHzWTd/s163runXpb7RpkNxDcWxeLcGeM7lzhlBB784PNQax4O+LPjLTz4e8YeKPDmnaFONl//AGFbTC5u4+8e6Q4jDDg4B4JFdP8AFPwVJ4l+EWp+B9Ce1sDPZx2tqZt3lRKjLgHAJwAuKfMrq7BRdnZHnHw58Xa1pfhW/wDh54xupH1VdBe+0LUWZh/aFoYC2Ax582LOD3wM9sntP2Ybie6+A3hO4up5Z5ntGLySuXZj5r9SeTTviD8MYvFvw203QXu1s9c0m2j/ALO1GLIME6xhDyOdjAEMPQ56gVtfB3wteeCvhpovhe/nt7i50+Fo5JLfPlsS7NxkA4wwpSacdAimnqdbXNfFLxJJ4Q+Heu+JYYRNNp9lJNEjdGcDC59skZ9qlu08Xnx7ZyWs2lDwqLJxdRurfazc5O0qfu7MYz361pa/pVjrmiXujalCJrO9geCeM8bkYYP069azWj1NHdrQ8b8D/CK18WeEdO8TeN/E3iXVNe1W1jvHuINVlgS28xQ6pEiEKoUEDoenpXoHws0LxZ4b0u80jxL4iTxBbw3B/sy7kVvtPkHokxPDMP7w9fpXGaF4K+MXg/SR4b8LeL/DV/otuPLsZdYspTdW0fZMxna+3oM/oOK7T4WeDLrwhpl4dV8QX2v6xqVwbm+vLhiFLnosceSI0GTgD1+gGkndbkRVnsea+GdMuPjR4w8Vah4m1nVYfDui6rJpen6RY3j2yMY/vSylCGYnPAzx+FS3Fne/CH4qeEdM0XWtUvfC/ii5ksZtMv7prj7LMACssTvlgORkZ9fbG/qnw78W+H/GeqeJ/hlr2mWQ1mQTanpWrQPJayTAf61GQ7kY9x3/AEEvhr4eeJtR8dWXjb4ka9Yanf6WjrpWn6bA0dnaM4w0nznc7kdz049Bh8y76dieV9tTlv2n08RXfjz4cab4X1iXS9Subi8NvIJGEZlRI3QOAcMpK45BGGNZPxR+IUviz4R6Hdr9o0fXbLxXY2Os2CytHJbThmDocHJRsZHYj6GvVPiB4J1HxF8RPA3iS0u7SG28O3NxLcxy7t8gkQKAmBjIxznFct8aPgq/jHxRpviXw9qFvpl8tzbtqkcu7yrxIWDIxCj/AFi8gE9Qe2KcZR0uEoy1aNf9pKx8YX/gGGLwkmoTbb+J9Tt9Om8q6ntBnekbdcnjgc49eRXJfCU+AW+IlofBvinxF4evFgdb7wtq/n5uuDhts5JDL1yhPT0zn1X4k+H9b8ReHPsvh3xNd+HdThnWeC6hG5WK5/dyL/EhzyPp9DxKfD7xx4k+InhvxT471Lw5FH4cLyW0WjQyh7iRhj948n3V77Rnv61MWuWzY5J81x/7Rvg/RbvwP4i8Xyf2jHq9hpMht5YNRniRSgJU+WjhCck9RzVv4C+DND0vwhoXim1GoNqmoaNCbmSfUZ5lYuiOxCO5UHI7DjpXWfE3QLrxT8Ptd8OWU0MFzqNjJbRSTZ2KzDAJxzj6VY8B6PceH/BGiaFdSxSz6fYQ2sjx52MyIFJGeccd6nm9y1yuVc17HzpqU3w/m+NvxFT4j+I77T4YLq1GnBNTuYFGYRvwIjjrt6+vHevSP2Zp9em0TX1vLnV7zw7Hqrr4dudVDfaZbT1JcBiucYJHrV/T/hYlx4n+I1x4ja0vdH8XG3CW8e7zI1jjKksSMBgSCpGcEVv/AAm0LxR4a8KroPibVrXVzZSGKxvI93myWw+4JQw++BxkEgjH43KScbLyIjFqVzkf2Wbm4ufC/iprm4mnZPFmoIplkLlVBTAGTwPam/AK5uZ/HXxVSe4mlWLxOyRK8hYIuzooJ4HsKbB8PviJ4P17XJfhx4g8Pro+s3j30llrNtKxtZ3++Y2jPIPHB9vqeq+D/gSTwRpGoHUNUOra1q969/qd75flrJM3ZV7KO349OgUmtX3HFPRdjznwtpNx8aPF/ivU/E+tatF4f0bVZNL07SLG8e2QmP70spQhmY5HfuewFdn4L+H2veCvGivoPii7uvCE8LC50rVLiS4kgl/heCQ5IHTKk+vXjFHUPh14w8O+NNV8S/DPX9LtI9al8/UdK1a3eS2abvKjIdyk85H/ANYC/wCC/A/i9vGi+MfH3iuPUL63haGy03TFeCxtw3VipOZG5PLDj8sDemj0BLXVanO/tR+ENGT4eeJvG8R1KHXLazQxTQ6lPGilWVR+7VwnQntXXfB3wVoPh/QrDWtOS/8AtuoabAbl7jUJ51YlVckLI5C8nsBWh8Y/C1741+GeueFtPuLe3utQtxFHLPny1O9WycAnt2re8M2Eul+HNN0yZ0eW0tIoHZM7SUQKSM9uKTl7lrlcvvXsaFBrn/HieLn0m3HgybSor/7XEZjqKsYzb5PmAbed/THaugrMs8e/Zbubm50Lxi1zcTTlPFt8imWRnKqCmAMnge1cF8CvFeuaP8U9XXWtSurrQPEHiC/0m2M8zOLW9hfzI1G4naHRyoAxyo9K9h+C/gnUfBGm6/a6jd2ly2pa7c6lEbfdhY5CuFbcB8wxzjiuSt/g1qTfDzxXoFzqlkmp6h4il13SbuHfi0l3K0RbIzkFSDjPBOK25o3Zjyysji/2ivFmt6n8QdPttD1K6tNF8O6xYWN61vO0YuLy5fcYyVI3BI0GQe7mu4/a8l1FPhvpUGl6ldadcXfiC1thPBM0TAOJF5KkHGSDj2qG9+DWry/DHRPDy6tZS61F4ji17V76bftupt7NIVwM55AGQOF7V1/xu8E6j478OaVpmm3dpbSWetW2oO1xu2skRYlRtB+Y547Uc0U15Byys/Mw/DHxQFj8E9S8ReIxnWvDXm6dqlvn5pL2E+Wqj/roShH+/XN/spyeJk8S/EGw8V6ndXupW1zaNOss7OsUkiSSOqAkhQC2MDA+Wt7xN8HZtW+MEPieLUoYvDdxcW9/q2lkHNzeW4YQvjGMcqTnrt7546L4d+CNR8N+PfHXiG7u7Sa38R3kFxbRxbt8SojKQ+RjPPbNDceV26jSldX6Hissvg25+NXxFi8cjxRdJDf24sE01r51iBi+cEW5wuTtxn3x3r2HxNDpunfs86wvh37fb2C6Bcy2huJJvPRWiZhuMh8wNz/FyKxbTwT8S/D3xD8XeI/C174RktfEV1FMY9SFyXjEabQP3eB3Pr2rtdb0fxF4g+F2paFrE2lR65qGnT20klqJBaq7qyqRuy+3BGe/WiUlpqKMWrnzDDP4IT4Tadd+F/FXiVviW1jDJBbWGo3k0sl0cblMRym3Oc9h/P3v4tWvxD1L4FmHQGli8UyWls14lrII5WOFM6RN0DH5sYPqB2rNvvhNrEfgnwY2iatZWHjTwpbxQ29+A/kToABLDIANxiYZ4xx+JrvvGmiav4i8GT6XZ67c+HtVljRkvbByTDKMHjOCyE5BBwSD2NEpptMIwaTPFfh1/wAIAPHOhR+HvEPivwT4giIW90PWmnJ1MY+ZGExKM3XDIc9wK2f2r7i3huPAMd/NqC6bNr4S+SyeVZJIfLO5QIjvY46Ac+lXdU+HfxE8Y6z4Ybx1rPhkWGgXqXol0u3mF1dSJjAYvxGCRkhc/oMdB8aPBPiHxXd+FdQ8N3el295oGqjUQNQ8zy5CFwF+QZ69enFHMuZO4WfK1Yq/Bez+H41LUbvwba+JIZ0hSK4Oq/blUqzEjaLk4JyvJXkd+teoVyvgwfEUX8//AAmLeFTZ+V+5/spbgSeZn+LzDjbjPTnNdVWctWaR2CiiipKCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP/9k=';
+let currentJob = null;
+let currentInspection = null;
+let checklists = {};
+let editingChecklistId = null;
+let editingItemIdx = null;
+let pinEntry = "";
+let results = {}, notes = {}, photos = {};
+let activeItems = [];
+let activeLabel = "";
+
+// ── SEED DEFAULT CHECKLISTS ─────────────────────────────────────────────────
+async function seedDefaultChecklists() {
+  const snap = await db.collection("checklists").get();
+  if (!snap.empty) return;
+  const defaults = [
+    {
+      label: "Slab – Post Pour",
+      order: 1,
+      items: [
+        {name:"Surface finish",desc:"Slab surface is smooth, trowelled to specification, free from ridges, tears, or trowel marks"},
+        {name:"Level / fall",desc:"Surface level within tolerance (±10 mm) or correct fall to drainage where required per plans"},
+        {name:"Cracks",desc:"No structural cracking present; any minor plastic shrinkage cracks within acceptable limits"},
+        {name:"Edge profiles",desc:"Slab edges straight, formed to correct depth and profile, free from honeycombing or voids"},
+        {name:"Rebate / step-downs",desc:"All rebates (garage, alfresco, wet areas) at correct depth and location per approved plans"},
+        {name:"Holding down bolts",desc:"HD bolts correctly located, plumb, and at correct projection height per engineer's specification"},
+        {name:"Service penetrations",desc:"All pipe and conduit penetrations in correct location; properly sealed around penetrations"},
+        {name:"Cover to reinforcement",desc:"Reinforcement not visible at surface or edges; minimum cover maintained throughout"},
+        {name:"Dimensional check",desc:"Slab dimensions (length, width, thickness) verified against approved drawings"},
+      ]
+    },
+    {
+      label: "Frame",
+      order: 2,
+      items: [
+        {name:"Structural members",desc:"All structural timber members are correct size, grade, and species per engineer's specification"},
+        {name:"Wall frame plumb",desc:"All wall frames plumb within 3 mm per 1200 mm height; no bowing or twisting"},
+        {name:"Wall frame straightness",desc:"Wall frames straight and true; no deviation greater than 5 mm over full height"},
+        {name:"Nogging spacing",desc:"Noggings installed at correct spacing per plans; correctly fixed to studs"},
+        {name:"Top plate continuity",desc:"Double top plates lapped and fixed correctly at all joints and corners"},
+        {name:"Bottom plate fixing",desc:"Bottom plates secured to slab or floor with correct anchor bolts or nails at required spacing"},
+        {name:"Stud spacing",desc:"Stud spacing correct throughout — typically 450 mm or 600 mm centres per structural drawings"},
+        {name:"Corner framing",desc:"Corner framing correctly assembled with minimum three studs; adequate fixing"},
+        {name:"Door & window openings",desc:"All door and window openings correct size and location per plans; lintels correct size"},
+        {name:"Lintel bearing",desc:"All lintels have minimum required bearing at each end; correctly seated"},
+        {name:"Roof framing – rafters",desc:"Rafters correct size and spacing; properly fixed to wall plates and ridge"},
+        {name:"Roof framing – ridgeboard",desc:"Ridgeboard correct size; level and straight along full length"},
+        {name:"Roof framing – ceiling joists",desc:"Ceiling joists correct size and spacing; properly fixed to wall plates and rafters"},
+        {name:"Bracing – wall",desc:"Structural wall bracing installed per bracing schedule; correct type, location, and fixing"},
+        {name:"Bracing – roof",desc:"Roof bracing installed per engineer's specification; diagonal and longitudinal members in place"},
+        {name:"Tie-down connections",desc:"All tie-down straps and connectors installed at correct locations per engineer's drawings"},
+        {name:"Framing connections",desc:"Joist hangers, hurricane ties, and all other connectors correctly installed with full nail pattern"},
+        {name:"Notching & drilling",desc:"All notching and drilling of framing members within allowable limits; no unauthorised cuts"},
+        {name:"Structural posts",desc:"All structural posts correct size; plumb; correctly fixed top and bottom"},
+        {name:"Beam installation",desc:"All beams correct size; level; correctly seated and fixed at each end per engineer's spec"},
+        {name:"Dimensional check",desc:"Overall building dimensions, setouts, and heights verified against approved architectural drawings"},
+        {name:"Approved drawings",desc:"Frame installation matches approved structural and architectural drawings throughout"},
+      ]
+    }
+  ];
+  for (const cl of defaults) {
+    await db.collection("checklists").add( cl);
+  }
+}
+
+// ── LOAD CHECKLISTS ────────────────────────────────────────────────────────
+async function loadChecklists() {
+  const snap = await db.collection("checklists").get();
+  checklists = {};
+  snap.forEach(d => { checklists[d.id] = { id: d.id, ...d.data() }; });
+  populateTypeDropdown();
+}
+
+function populateTypeDropdown() {
+  const sel = document.getElementById('f-type');
+  if (!sel) return;
+  sel.innerHTML = '';
+  Object.values(checklists).forEach(cl => {
+    const opt = document.createElement('option');
+    opt.value = cl.id;
+    opt.textContent = cl.label;
+    sel.appendChild(opt);
+  });
+}
+
+// ── JOBS ───────────────────────────────────────────────────────────────────
+async function loadJobs() {
+  const list = document.getElementById('jobs-list');
+  list.innerHTML = '<div class="loading"><div class="spinner"></div>Loading jobs…</div>';
+  try {
+    const snap = await db.collection("jobs").get();
+    if (snap.empty) {
+      list.innerHTML = '<div class="empty-state"><div class="es-icon">🏗️</div><div class="es-title">No jobs yet</div><div class="es-sub">Tap "+ New job" to create your first project.</div></div>';
+      return;
+    }
+    list.innerHTML = '';
+    snap.forEach(d => {
+      const job = { id: d.id, ...d.data() };
+      const div = document.createElement('div');
+      div.className = 'job-item';
+      div.innerHTML = `<div class="job-info"><div class="job-addr">${job.address}</div><div class="job-num">${job.jobNumber}${job.client ? ' · ' + job.client : ''}</div></div><div class="job-arrow">›</div>`;
+      div.onclick = () => openJob(job);
+      list.appendChild(div);
+    });
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state"><div class="es-icon">⚠️</div><div class="es-title">Connection error</div><div class="es-sub">' + e.message + '</div></div>';
+  }
+}
+
+async function createJob() {
+  const addr = document.getElementById('nj-addr').value.trim();
+  const jobNum = document.getElementById('nj-job').value.trim();
+  const client = document.getElementById('nj-client').value.trim();
+  if (!addr) { showToast('Please enter an address'); return; }
+  const ref = await db.collection("jobs").add( {
+    address: addr, jobNumber: jobNum || 'N/A', client: client || '',
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  document.getElementById('nj-addr').value = '';
+  document.getElementById('nj-job').value = '';
+  document.getElementById('nj-client').value = '';
+  const job = { id: ref.id, address: addr, jobNumber: jobNum || 'N/A', client: client || '' };
+  openJob(job);
+}
+
+async function openJob(job) {
+  currentJob = job;
+  document.getElementById('jd-title').textContent = job.address;
+  document.getElementById('jd-label').textContent = job.jobNumber;
+  document.getElementById('jd-meta').innerHTML = `
+    <div class="meta-row"><span class="meta-k">Address</span><span class="meta-v">${job.address}</span></div>
+    <div class="meta-row"><span class="meta-k">Job number</span><span class="meta-v">${job.jobNumber}</span></div>
+    ${job.client ? `<div class="meta-row"><span class="meta-k">Client</span><span class="meta-v">${job.client}</span></div>` : ''}
+  `;
+  showScreen('screen-job-detail');
+  loadInspections();
+}
+
+async function loadInspections() {
+  const list = document.getElementById('inspections-list');
+  list.innerHTML = '<div class="loading"><div class="spinner"></div>Loading…</div>';
+  const snap = await db.collection("jobs").doc(currentJob.id).collection("inspections").get();
+  if (snap.empty) {
+    list.innerHTML = '<div class="empty-state" style="padding:24px 0;"><div class="es-icon">📋</div><div class="es-title">No inspections yet</div><div class="es-sub">Tap "+ New inspection" to start.</div></div>';
+    return;
+  }
+  list.innerHTML = '';
+  snap.forEach(d => {
+    const insp = { id: d.id, ...d.data() };
+    const pass = insp.pass || 0, fail = insp.fail || 0, na = insp.na || 0;
+    const total = insp.totalItems || 1;
+    const inspected = pass + fail + na;
+    let badgeClass = 'partial', badgeText = 'In progress';
+    if (inspected === total) {
+      badgeClass = fail === 0 ? 'pass' : 'fail';
+      badgeText = fail === 0 ? 'Passed' : `${fail} fail`;
+    }
+    const div = document.createElement('div');
+    div.className = 'insp-item';
+    div.innerHTML = `
+      <div class="insp-header">
+        <div class="insp-type">${insp.type || 'Inspection'}</div>
+        <span class="insp-badge ${badgeClass}">${badgeText}</span>
+      </div>
+      <div class="insp-meta">${insp.date || ''} · ${insp.inspector || ''}</div>
+    `;
+    div.onclick = () => viewInspection(insp);
+    list.appendChild(div);
+  });
+}
+
+// ── INSPECTION ─────────────────────────────────────────────────────────────
+function startNewInspection() {
+  populateTypeDropdown();
+  showScreen('screen-insp-setup');
+}
+
+function beginInspection() {
+  const typeId = document.getElementById('f-type').value;
+  const cl = checklists[typeId];
+  if (!cl) { showToast('Please select a checklist'); return; }
+  activeItems = cl.items.map((item, i) => [String(i+1), item.name, item.desc]);
+  activeLabel = cl.label;
+  currentInspection = {
+    checklistId: typeId,
+    type: cl.label,
+    inspector: document.getElementById('f-ins').value || 'Not specified',
+    supervisor: document.getElementById('f-sup').value || 'Not specified',
+    subcontractor: document.getElementById('f-sub').value || 'Not specified',
+    date: new Date().toLocaleDateString('en-AU',{day:'2-digit',month:'short',year:'numeric'}),
+    time: new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}),
+    totalItems: activeItems.length,
+  };
+  results = {}; notes = {}; photos = {};
+  buildChecklist();
+  showScreen('screen-check');
+}
+
+async function viewInspection(insp) {
+  // Load saved inspection and show report
+  const cl = checklists[insp.checklistId];
+  if (cl) activeItems = cl.items.map((item,i) => [String(i+1), item.name, item.desc]);
+  activeLabel = insp.type;
+  currentInspection = insp;
+  results = insp.results || {};
+  notes = insp.notes || {};
+  photos = insp.photos || {};
+  buildReportBody();
+  showScreen('screen-report');
+}
+
+function buildChecklist() {
+  document.getElementById('check-bar-title').textContent = activeLabel;
+  const body = document.getElementById('checklist-body');
+  body.innerHTML = '';
+  activeItems.forEach(([num, name, req]) => {
+    const div = document.createElement('div');
+    div.className = 'icard';
+    div.id = 'card-' + num;
+    div.innerHTML = `
+      <div class="inum">Item ${num}</div>
+      <div class="iname">${name}</div>
+      <div class="ireq">${req}</div>
+      <div class="btn-row">
+        <button class="rbtn" onclick="setResult('${num}','PASS',this)">✓ Pass</button>
+        <button class="rbtn" onclick="setResult('${num}','FAIL',this)">✗ Fail</button>
+        <button class="rbtn" onclick="setResult('${num}','NA',this)">— N/A</button>
+      </div>
+      <label class="note-label">Notes</label>
+      <textarea class="note-field" id="note-${num}" placeholder="Add notes…" oninput="notes['${num}']=this.value"></textarea>
+      <label class="note-label">Photos</label>
+      <div class="photos-row" id="photos-${num}"></div>
+      <label class="photo-label-btn">📷 Add photo<input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="handlePhotos('${num}',this)"></label>
+    `;
+    body.appendChild(div);
+  });
+  updateProgress();
+}
+
+function setResult(num, val, btn) {
+  results[num] = val;
+  const card = document.getElementById('card-' + num);
+  card.className = 'icard' + (val==='PASS'?' is-pass':val==='FAIL'?' is-fail':' is-na');
+  card.querySelectorAll('.rbtn').forEach(b => b.classList.remove('sel-pass','sel-fail','sel-na'));
+  btn.classList.add(val==='PASS'?'sel-pass':val==='FAIL'?'sel-fail':'sel-na');
+  updateProgress();
+}
+
+async function handlePhotos(num, input) {
+  if (!photos[num]) photos[num] = [];
+  const row = document.getElementById('photos-' + num);
+  for (const file of Array.from(input.files)) {
+    const compressed = await compressImage(file);
+    const idx = photos[num].length;
+    photos[num].push(compressed);
+    const wrap = document.createElement('div');
+    wrap.className = 'thumb-wrap';
+    wrap.id = 'thumb-' + num + '-' + idx;
+    wrap.innerHTML = `<img class="thumb" src="${compressed}"><button class="thumb-del" onclick="removePhoto('${num}',${idx})">×</button>`;
+    row.appendChild(wrap);
+  }
+  input.value = '';
+}
+
+function removePhoto(num, idx) {
+  photos[num][idx] = null;
+  const wrap = document.getElementById('thumb-' + num + '-' + idx);
+  if (wrap) wrap.remove();
+}
+
+function updateProgress() {
+  const done = Object.keys(results).length;
+  const total = activeItems.length;
+  const pct = Math.round(done / total * 100);
+  document.getElementById('prog').style.width = pct + '%';
+  document.getElementById('prog-txt').textContent = done + ' of ' + total + ' items inspected';
+}
+
+function getCounts() {
+  let p=0, f=0, na=0, fi=[];
+  activeItems.forEach(([num, nm]) => {
+    const r = results[num];
+    if (r==='PASS') p++;
+    else if (r==='FAIL') { f++; fi.push({num, nm, note: notes[num]||'', ph:(photos[num]||[]).filter(Boolean)}); }
+    else if (r==='NA') na++;
+  });
+  return {p, f, na, fi, out: activeItems.length - p - f - na};
+}
+
+async function goSummary() {
+  const {p, f, na, fi, out} = getCounts();
+  // Only save once - if already saved, just update the existing record
+  const inspData = {
+    ...currentInspection,
+    results, notes,
+    photos: Object.fromEntries(Object.entries(photos).map(([k,v])=>[k,(v||[]).filter(Boolean)])),
+    pass: p, fail: f, na, outstanding: out,
+  };
+  try {
+    if (currentInspection.id) {
+      // Already saved - update existing record
+      await db.collection('jobs').doc(currentJob.id).collection('inspections').doc(currentInspection.id).update(inspData);
+    } else {
+      // First save
+      inspData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      const ref = await db.collection('jobs').doc(currentJob.id).collection('inspections').add(inspData);
+      currentInspection.id = ref.id;
+      showToast('Inspection saved');
+    }
+  } catch(e) { showToast('Could not save — check connection'); }
+  buildSummary();
+  showScreen('screen-sum');
+}
+
+function buildSummary() {
+  const {p, f, na, fi, out} = getCounts();
+  const allPass = f===0 && out===0;
+  const vClass = allPass ? 'vpass' : 'vfail';
+  const vText = allPass ? 'Passed — ready for next stage' : f > 0 ? `${f} item${f>1?'s':''} require rectification` : `${out} item${out>1?'s':''} outstanding`;
+  const failHtml = fi.length ? `
+    <div style="margin-bottom:20px;">
+      <div style="font-size:11px;font-weight:700;color:#9A9690;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Items requiring rectification</div>
+      ${fi.map(x=>`<div style="background:#F5E8E5;border-radius:8px;padding:13px;margin-bottom:8px;border:1px solid #A84232;">
+        <div style="font-size:10px;color:#6B2318;opacity:.7;font-weight:600;margin-bottom:2px;">Item ${x.num}</div>
+        <div style="font-size:14px;font-weight:600;color:#6B2318;">${x.nm}</div>
+        ${x.note?`<div style="font-size:12px;color:#6B2318;margin-top:4px;">${x.note}</div>`:''}
+        ${x.ph.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">${x.ph.map(s=>`<img src="${s}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;border:1px solid #A84232;">`).join('')}</div>`:''}
+      </div>`).join('')}
+    </div>` : '';
+
+  document.getElementById('sum-body').innerHTML = `
+    <div style="font-size:22px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px;">${currentInspection.type}</div>
+    <div style="font-size:13px;color:#5C5A57;margin-bottom:20px;">${currentJob.address} · ${currentInspection.date}</div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val" style="color:#1E4D1E">${p}</div><div class="stat-lbl">Pass</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:#6B2318">${f}</div><div class="stat-lbl">Fail</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:#4A4540">${na}</div><div class="stat-lbl">N/A</div></div>
+      <div class="stat-card"><div class="stat-val">${out}</div><div class="stat-lbl">Outstanding</div></div>
+    </div>
+    <div class="verdict ${vClass}"><div class="vl">Overall result</div><div class="vr">${vText}</div></div>
+    ${failHtml}
+    <div class="meta-card">
+      <div class="meta-row"><span class="meta-k">Address</span><span class="meta-v">${currentJob.address}</span></div>
+      <div class="meta-row"><span class="meta-k">Job number</span><span class="meta-v">${currentJob.jobNumber}</span></div>
+      <div class="meta-row"><span class="meta-k">Inspector</span><span class="meta-v">${currentInspection.inspector}</span></div>
+      <div class="meta-row"><span class="meta-k">Supervisor</span><span class="meta-v">${currentInspection.supervisor}</span></div>
+      <div class="meta-row"><span class="meta-k">Subcontractor</span><span class="meta-v">${currentInspection.subcontractor}</span></div>
+      <div class="meta-row"><span class="meta-k">Date / time</span><span class="meta-v">${currentInspection.date}, ${currentInspection.time}</span></div>
+    </div>
+    <div class="action-card">
+      <h3>Report</h3>
+      <p>View the full formatted report with photos, save as PDF, or send via Outlook.</p>
+      <button class="primary-btn" onclick="goReport()">View &amp; send report</button>
+    </div>
+    <button class="ghost-btn" onclick="openJob(currentJob)">Back to job</button>
+  `;
+}
+
+function goReport() {
+  buildReportBody();
+  showScreen('screen-report');
+}
+
+function buildReportBody() {
+  document.getElementById('report-bar-title').textContent = activeLabel + ' Inspection';
+  const {p, f, na, fi, out} = getCounts();
+  const allPass = f===0 && out===0;
+  const verdict = allPass ? 'PASSED' : 'REQUIRES RECTIFICATION';
+  const vBg = allPass?'#E8F0E8':'#F5E8E5', vCol=allPass?'#1E4D1E':'#6B2318', vBd=allPass?'#4A7C4A':'#A84232';
+
+  let itemsHtml = '';
+  activeItems.forEach(([num, nm, rq]) => {
+    const r = results[num]||'—', nt=notes[num]||'', ph=(photos[num]||[]).filter(Boolean);
+    const rBg=r==='PASS'?'#E8F0E8':r==='FAIL'?'#F5E8E5':r==='NA'?'#F0EDE8':'#fff';
+    const rCol=r==='PASS'?'#1E4D1E':r==='FAIL'?'#6B2318':r==='NA'?'#4A4540':'#333';
+    const rBd=r==='PASS'?'#4A7C4A':r==='FAIL'?'#A84232':r==='NA'?'#8A8278':'#ccc';
+    itemsHtml += `<div style="border-bottom:1px solid #E4E0DA;padding:14px 16px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+        <div style="flex:1;">
+          <div style="font-size:10px;font-weight:700;color:#9A9690;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">Item ${num}</div>
+          <div style="font-size:14px;font-weight:700;color:#1A1F24;">${nm}</div>
+        </div>
+        <span style="display:inline-block;background:${rBg};color:${rCol};font-weight:700;font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid ${rBd};margin-left:12px;white-space:nowrap;">${r}</span>
+      </div>
+      <div style="font-size:12px;color:#5C5A57;line-height:1.55;${nt||ph.length?'margin-bottom:8px':''}">${rq}</div>
+      ${nt?`<div style="font-size:12px;color:#333;background:#F7F6F4;padding:8px 10px;border-radius:6px;border-left:3px solid #B7B09C;${ph.length?'margin-bottom:8px':''}">${nt}</div>`:''}
+      ${ph.length?'<div style="display:flex;flex-wrap:wrap;gap:8px;">'+ph.map(s=>`<img src="${s}" style="width:100%;max-width:100%;height:auto;border-radius:6px;border:1px solid #ddd;display:block;">`).join('')+'</div>':''}
+    </div>`;
+  });
+
+  document.getElementById('report-body').innerHTML =
+    `<div style="background:#333F48;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
+      <div style="background:#fff;padding:4px 10px;border-radius:5px;"><img src="${LOGO}" style="height:22px;display:block;" alt="Pacific Blue"></div>
+      <div style="text-align:right;color:rgba(255,255,255,.6);font-size:10px;line-height:1.7;"><div>${activeLabel} QA Inspection</div><div>${currentInspection.date||''} · ${currentInspection.time||''}</div></div>
+    </div>
+    <div style="padding:16px;">
+      <div style="background:#F7F6F4;border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px;">
+        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="color:#9A9690;font-weight:500;">Address</span><span style="font-weight:600;">${currentJob.address}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="color:#9A9690;font-weight:500;">Job number</span><span style="font-weight:600;">${currentJob.jobNumber}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="color:#9A9690;font-weight:500;">Inspector</span><span style="font-weight:600;">${currentInspection.inspector||''}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="color:#9A9690;font-weight:500;">Supervisor</span><span style="font-weight:600;">${currentInspection.supervisor||''}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="color:#9A9690;font-weight:500;">Subcontractor</span><span style="font-weight:600;">${currentInspection.subcontractor||''}</span></div>
+      </div>
+      <div style="border-radius:8px;padding:12px 14px;margin-bottom:12px;border:1.5px solid ${vBd};background:${vBg};">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:700;color:${vCol};margin-bottom:2px;">Overall result</div>
+        <div style="font-size:16px;font-weight:700;color:${vCol};">${verdict}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">
+        <div style="background:#F7F6F4;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:22px;font-weight:700;color:#1E4D1E">${p}</div><div style="font-size:10px;color:#9A9690;text-transform:uppercase;letter-spacing:.07em;">Pass</div></div>
+        <div style="background:#F7F6F4;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:22px;font-weight:700;color:#6B2318">${f}</div><div style="font-size:10px;color:#9A9690;text-transform:uppercase;letter-spacing:.07em;">Fail</div></div>
+        <div style="background:#F7F6F4;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:22px;font-weight:700;color:#4A4540">${na}</div><div style="font-size:10px;color:#9A9690;text-transform:uppercase;letter-spacing:.07em;">N/A</div></div>
+        <div style="background:#F7F6F4;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:22px;font-weight:700;">${out}</div><div style="font-size:10px;color:#9A9690;text-transform:uppercase;letter-spacing:.07em;">Outstanding</div></div>
+      </div>
+    </div>
+    <div style="background:#333F48;padding:8px 16px;"><div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.08em;">Inspection items</div></div>
+    ${itemsHtml}
+    <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+      <div style="border-top:1px solid #333;padding-top:6px;font-size:11px;color:#666;">Inspector signature &amp; date</div>
+      <div style="border-top:1px solid #333;padding-top:6px;font-size:11px;color:#666;">Supervisor signature &amp; date</div>
+    </div>
+    <div style="padding:0 16px 16px;font-size:10px;color:#9A9690;text-align:center;border-top:1px solid #E4E0DA;padding-top:12px;">Pacific Blue Building · Design. Construct. Immerse · Generated by the Pacific Blue QA inspection system</div>`;
+}
+
+
+
+function printReport() {
+  // Hide everything except report-body instantly, print, then restore
+  const style = document.createElement('style');
+  style.id = 'print-override';
+  style.textContent = `
+    @media print {
+      body > * { display: none !important; }
+      #print-container { display: block !important; position: fixed; top: 0; left: 0; width: 100%; }
+    }
+  `;
+  // Create a clean print container with just the report
+  const container = document.createElement('div');
+  container.id = 'print-container';
+  container.style.display = 'none';
+  container.innerHTML = document.getElementById('report-body').innerHTML;
+  document.body.appendChild(style);
+  document.body.appendChild(container);
+  window.print();
+  // Clean up after print dialog
+  setTimeout(() => {
+    style.remove();
+    container.remove();
+  }, 1000);
+}
+
+async function generateEmail() {
+  const {p, f, na, fi, out} = getCounts();
+  const verdict = f===0&&out===0?'PASSED':'REQUIRES RECTIFICATION';
+  const subj = encodeURIComponent(`${activeLabel} QA Inspection | ${currentJob.address} | ${currentInspection.date}`);
+  let body = `PACIFIC BLUE BUILDING\n${activeLabel} QA Inspection\n${'='.repeat(44)}\n\n`;
+  body += `Address:       ${currentJob.address}\nJob Number:    ${currentJob.jobNumber}\nDate / Time:   ${currentInspection.date}, ${currentInspection.time}\nInspector:     ${currentInspection.inspector}\nSupervisor:    ${currentInspection.supervisor}\nSubcontractor: ${currentInspection.subcontractor}\n\n`;
+  body += `OVERALL RESULT: ${verdict}\nPass: ${p}  |  Fail: ${f}  |  N/A: ${na}  |  Outstanding: ${out}\n${'='.repeat(44)}\n\nFULL INSPECTION RESULTS\n\n`;
+  activeItems.forEach(([num, nm]) => {
+    const r = results[num]||'NOT INSPECTED', nt=notes[num]||'', ph=(photos[num]||[]).filter(Boolean);
+    body += `Item ${num}: ${nm}\nResult: ${r}\n`;
+    if (nt) body += `Notes: ${nt}\n`;
+    if (ph.length) body += `Photos: ${ph.length} photo(s) taken\n`;
+    body += '\n';
+  });
+  body += `\nPlease find the full inspection report attached as a PDF.\n\nGenerated by Pacific Blue Building QA System.`;
+  const ccEmails = await getCCEmails();
+  const ccStr = ccEmails.length ? ccEmails.map(e => encodeURIComponent(e)).join(',') : '';
+  const ccParam = ccStr ? `&cc=${ccStr}` : '';
+  window.location.href = `mailto:?${ccParam}&subject=${subj}&body=${encodeURIComponent(body)}`;
+}
+
+// ── PIN ────────────────────────────────────────────────────────────────────
+function pinKey(d) {
+  if (pinEntry.length >= 4) return;
+  pinEntry += d;
+  document.getElementById('pd'+(pinEntry.length-1)).classList.add('filled');
+  if (pinEntry.length === 4) {
+    setTimeout(() => {
+      if (pinEntry === ADMIN_PIN) {
+        pinReset();
+        showAdminScreen();
+      } else {
+        document.getElementById('pin-error').textContent = 'Incorrect PIN';
+        setTimeout(() => { pinReset(); document.getElementById('pin-error').textContent=''; }, 1000);
+      }
+    }, 200);
+  }
+}
+
+function pinDel() {
+  if (!pinEntry.length) return;
+  pinEntry = pinEntry.slice(0,-1);
+  document.querySelectorAll('.pin-dot').forEach((d,i) => d.classList.toggle('filled', i < pinEntry.length));
+}
+
+function pinReset() {
+  pinEntry = '';
+  document.querySelectorAll('.pin-dot').forEach(d => d.classList.remove('filled'));
+}
+
+// ── ADMIN ──────────────────────────────────────────────────────────────────
+
+
+let adminInspJobId = null;
+
+async function manageInspections(jobId, jobAddr) {
+  adminInspJobId = jobId;
+  document.getElementById('admin-insp-title').textContent = jobAddr;
+  showScreen('screen-admin-inspections');
+  const list = document.getElementById('admin-insp-list');
+  list.innerHTML = '<div class="loading"><div class="spinner"></div>Loading…</div>';
+  try {
+    const snap = await db.collection('jobs').doc(jobId).collection('inspections').get();
+    if (snap.empty) {
+      list.innerHTML = '<div class="empty-state"><div class="es-title">No inspections</div></div>';
+      return;
+    }
+    list.innerHTML = '';
+    snap.forEach(d => {
+      const insp = { id: d.id, ...d.data() };
+      const pass = insp.pass || 0, fail = insp.fail || 0;
+      const div = document.createElement('div');
+      div.className = 'admin-item';
+      div.innerHTML = `
+        <div class="admin-item-name">${insp.type || 'Inspection'}</div>
+        <div class="admin-item-desc">${insp.date || ''} · ${insp.inspector || ''} · Pass: ${pass} Fail: ${fail}</div>
+        <div class="admin-btns">
+          <button class="del-btn" style="width:100%;" onclick="deleteInspection('${d.id}')">Delete inspection</button>
+        </div>`;
+      list.appendChild(div);
+    });
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state"><div class="es-title">Error: ' + e.message + '</div></div>';
+  }
+}
+
+async function deleteInspection(inspId) {
+  if (!confirm('Delete this inspection record permanently?')) return;
+  try {
+    await db.collection('jobs').doc(adminInspJobId).collection('inspections').doc(inspId).delete();
+    manageInspections(adminInspJobId, document.getElementById('admin-insp-title').textContent);
+    showToast('Inspection deleted');
+  } catch(e) { showToast('Error: ' + e.message); }
+}
+
+
+async function loadCCEmails() {
+  try {
+    const doc = await db.collection('settings').doc('cc-emails').get();
+    if (doc.exists) {
+      const data = doc.data();
+      document.getElementById('cc-email-1').value = data.cc1 || '';
+      document.getElementById('cc-email-2').value = data.cc2 || '';
+      document.getElementById('cc-email-3').value = data.cc3 || '';
+    }
+  } catch(e) { console.log('Could not load CC emails:', e); }
+}
+
+async function saveCCEmails() {
+  const cc1 = document.getElementById('cc-email-1').value.trim();
+  const cc2 = document.getElementById('cc-email-2').value.trim();
+  const cc3 = document.getElementById('cc-email-3').value.trim();
+  try {
+    await db.collection('settings').doc('cc-emails').set({ cc1, cc2, cc3 });
+    showToast('CC emails saved');
+  } catch(e) { showToast('Error saving: ' + e.message); }
+}
+
+async function getCCEmails() {
+  try {
+    const doc = await db.collection('settings').doc('cc-emails').get();
+    if (doc.exists) {
+      const data = doc.data();
+      return [data.cc1, data.cc2, data.cc3].filter(Boolean);
+    }
+  } catch(e) {}
+  return [];
+}
+
+function switchAdminTab(tab) {
+  document.getElementById('admin-tab-checklists').style.display = tab === 'checklists' ? 'block' : 'none';
+  document.getElementById('admin-tab-jobs').style.display = tab === 'jobs' ? 'block' : 'none';
+  document.getElementById('tab-checklists').style.background = tab === 'checklists' ? '#333F48' : '#F7F6F4';
+  document.getElementById('tab-checklists').style.color = tab === 'checklists' ? '#fff' : '#5C5A57';
+  document.getElementById('tab-jobs').style.background = tab === 'jobs' ? '#333F48' : '#F7F6F4';
+  document.getElementById('tab-jobs').style.color = tab === 'jobs' ? '#fff' : '#5C5A57';
+  if (tab === 'jobs') loadAdminJobs();
+}
+
+let editingJobId = null;
+
+async function loadAdminJobs() {
+  const list = document.getElementById('admin-jobs-list');
+  list.innerHTML = '<div class="loading"><div class="spinner"></div>Loading…</div>';
+  try {
+    const snap = await db.collection('jobs').get();
+    if (snap.empty) {
+      list.innerHTML = '<div class="empty-state"><div class="es-title">No jobs yet</div></div>';
+      return;
+    }
+    list.innerHTML = '';
+    snap.forEach(d => {
+      const job = { id: d.id, ...d.data() };
+      const div = document.createElement('div');
+      div.className = 'admin-item';
+      div.innerHTML = `
+        <div class="admin-item-name">${job.address}</div>
+        <div class="admin-item-desc">${job.jobNumber}${job.client ? ' · ' + job.client : ''}</div>
+        <div class="admin-btns">
+          <button class="edit-btn" onclick="openEditJob('${job.id}','${job.address.replace(/'/g,"\'")}','${(job.jobNumber||'').replace(/'/g,"\'")}','${(job.client||'').replace(/'/g,"\'")}')">Edit</button>
+          <button class="edit-btn" onclick="manageInspections('${job.id}','${job.address}')">Inspections</button>
+          <button class="del-btn" onclick="deleteJob('${job.id}')">Delete</button>
+        </div>`;
+      list.appendChild(div);
+    });
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state"><div class="es-title">Error: ' + e.message + '</div></div>';
+  }
+}
+
+function openEditJob(id, addr, num, client) {
+  editingJobId = id;
+  document.getElementById('modal-job-addr').value = addr;
+  document.getElementById('modal-job-num').value = num;
+  document.getElementById('modal-job-client').value = client;
+  openModal('modal-job');
+}
+
+async function saveJobEdit() {
+  const addr = document.getElementById('modal-job-addr').value.trim();
+  const num = document.getElementById('modal-job-num').value.trim();
+  const client = document.getElementById('modal-job-client').value.trim();
+  if (!addr) { showToast('Please enter an address'); return; }
+  try {
+    await db.collection('jobs').doc(editingJobId).update({
+      address: addr, jobNumber: num || 'N/A', client: client || ''
+    });
+    closeModal('modal-job');
+    loadAdminJobs();
+    showToast('Job updated');
+  } catch(e) { showToast('Error: ' + e.message); }
+}
+
+async function deleteJob(id) {
+  if (!confirm('Delete this job? All inspection records for this job will also be lost.')) return;
+  try {
+    // Delete all inspections under this job first
+    const inspSnap = await db.collection('jobs').doc(id).collection('inspections').get();
+    const batch = db.batch();
+    inspSnap.forEach(d => batch.delete(d.ref));
+    batch.delete(db.collection('jobs').doc(id));
+    await batch.commit();
+    loadAdminJobs();
+    showToast('Job deleted');
+  } catch(e) { showToast('Error: ' + e.message); }
+}
+
+async function showAdminScreen() {
+  showScreen('screen-admin');
+  await loadChecklists();
+  renderAdminChecklists();
+  await loadCCEmails();
+}
+
+function renderAdminChecklists() {
+  const container = document.getElementById('admin-checklists');
+  container.innerHTML = '';
+  const cls = Object.values(checklists);
+  if (!cls.length) {
+    container.innerHTML = '<div class="empty-state"><div class="es-title">No checklists yet</div></div>';
+    return;
+  }
+  cls.forEach(cl => {
+    const div = document.createElement('div');
+    div.className = 'admin-item';
+    div.innerHTML = `
+      <div class="admin-item-header">
+        <div class="admin-item-name">${cl.label}</div>
+        <div style="font-size:12px;color:#9A9690;">${(cl.items||[]).length} items</div>
+      </div>
+      <div class="admin-btns">
+        <button class="edit-btn" onclick="openEditChecklist('${cl.id}')">Edit</button>
+        <button class="del-btn" onclick="deleteChecklist('${cl.id}')">Delete</button>
+      </div>`;
+    container.appendChild(div);
+  });
+}
+
+function openAddChecklist() {
+  document.getElementById('modal-cl-name').value = '';
+  document.getElementById('modal-cl-title').textContent = 'New Checklist';
+  openModal('modal-checklist');
+}
+
+async function saveNewChecklist() {
+  const name = document.getElementById('modal-cl-name').value.trim();
+  if (!name) { showToast('Enter a checklist name'); return; }
+  const order = Object.keys(checklists).length + 1;
+  await db.collection("checklists").add( { label: name, order, items: [] });
+  closeModal('modal-checklist');
+  await loadChecklists();
+  renderAdminChecklists();
+  showToast('Checklist created');
+}
+
+async function deleteChecklist(id) {
+  if (!confirm('Delete this checklist?')) return;
+  await db.collection("checklists").doc(id).delete();
+  await loadChecklists();
+  renderAdminChecklists();
+  showToast('Deleted');
+}
+
+function openEditChecklist(id) {
+  editingChecklistId = id;
+  const cl = checklists[id];
+  document.getElementById('edit-bar-title').textContent = cl.label;
+  document.getElementById('edit-cl-name').value = cl.label;
+  renderEditItems();
+  showScreen('screen-admin-edit');
+}
+
+function renderEditItems() {
+  const cl = checklists[editingChecklistId];
+  const container = document.getElementById('edit-items-list');
+  container.innerHTML = '';
+  (cl.items||[]).forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.className = 'admin-item';
+    div.innerHTML = `
+      <div class="admin-item-name">${item.name}</div>
+      <div class="admin-item-desc">${item.desc}</div>
+      <div class="admin-btns">
+        <button class="edit-btn" onclick="openEditItem(${idx})">Edit</button>
+        <button class="del-btn" onclick="deleteItem(${idx})">Remove</button>
+      </div>`;
+    container.appendChild(div);
+  });
+}
+
+function openAddItem() {
+  editingItemIdx = null;
+  document.getElementById('modal-item-title').textContent = 'Add Item';
+  document.getElementById('modal-item-name').value = '';
+  document.getElementById('modal-item-desc').value = '';
+  openModal('modal-item');
+}
+
+function openEditItem(idx) {
+  editingItemIdx = idx;
+  const item = checklists[editingChecklistId].items[idx];
+  document.getElementById('modal-item-title').textContent = 'Edit Item';
+  document.getElementById('modal-item-name').value = item.name;
+  document.getElementById('modal-item-desc').value = item.desc;
+  openModal('modal-item');
+}
+
+function saveItem() {
+  const name = document.getElementById('modal-item-name').value.trim();
+  const desc = document.getElementById('modal-item-desc').value.trim();
+  if (!name) { showToast('Enter item name'); return; }
+  const items = [...(checklists[editingChecklistId].items||[])];
+  if (editingItemIdx === null) {
+    items.push({name, desc});
+  } else {
+    items[editingItemIdx] = {name, desc};
+  }
+  checklists[editingChecklistId].items = items;
+  closeModal('modal-item');
+  renderEditItems();
+}
+
+function deleteItem(idx) {
+  const items = [...(checklists[editingChecklistId].items||[])];
+  items.splice(idx, 1);
+  checklists[editingChecklistId].items = items;
+  renderEditItems();
+}
+
+async function saveChecklist() {
+  const name = document.getElementById('edit-cl-name').value.trim();
+  if (!name) { showToast('Enter a checklist name'); return; }
+  const cl = checklists[editingChecklistId];
+  await db.collection("checklists").doc(editingChecklistId).set( {
+    label: name,
+    order: cl.order || 1,
+    items: cl.items || []
+  });
+  await loadChecklists();
+  showToast('Saved');
+  showAdminScreen();
+}
+
+// ── UTILITIES ──────────────────────────────────────────────────────────────
+function compressImage(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, 1200/img.width);
+        const w = Math.round(img.width*scale), h = Math.round(img.height*scale);
+        const canvas = document.createElement('canvas');
+        canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg',0.75));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function confirmHome() {
+  if (Object.keys(results).length === 0) {
+    showScreen('screen-setup');
+    return;
+  }
+  if (confirm('Return to home? Your progress will be lost.')) {
+    results = {}; notes = {}; photos = {};
+    showScreen('screen-setup');
+  }
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+(async () => {
+  await seedDefaultChecklists();
+  await loadChecklists();
+})();
+
+// Expose globals needed by inline onclick handlers
+window.showScreen = showScreen;
+window.loadJobs = loadJobs;
+window.switchAdminTab = switchAdminTab;
+window.loadAdminJobs = loadAdminJobs;
+window.openEditJob = openEditJob;
+window.saveJobEdit = saveJobEdit;
+window.deleteJob = deleteJob;
+window.manageInspections = manageInspections;
+window.deleteInspection = deleteInspection;
+window.confirmHome = confirmHome;
+window.createJob = createJob;
+window.openJob = openJob;
+window.startNewInspection = startNewInspection;
+window.beginInspection = beginInspection;
+window.setResult = setResult;
+window.handlePhotos = handlePhotos;
+window.removePhoto = removePhoto;
+window.goSummary = goSummary;
+window.goReport = goReport;
+window.generateEmail = generateEmail;
+window.printReport = printReport;
+window.saveCCEmails = saveCCEmails;
+window.pinKey = pinKey;
+window.pinDel = pinDel;
+window.pinReset = pinReset;
+window.showAdminScreen = showAdminScreen;
+window.openAddChecklist = openAddChecklist;
+window.saveNewChecklist = saveNewChecklist;
+window.deleteChecklist = deleteChecklist;
+window.openEditChecklist = openEditChecklist;
+window.openAddItem = openAddItem;
+window.openEditItem = openEditItem;
+window.saveItem = saveItem;
+window.deleteItem = deleteItem;
+window.saveChecklist = saveChecklist;
+window.closeModal = closeModal;
+window.viewInspection = viewInspection;
+window.buildReportBody = buildReportBody;
+window.currentJob = currentJob;
+window.notes = notes;
+window.photos = photos;
+window.results = results;
+</script>
+</body>
+</html>
