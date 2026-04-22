@@ -93,7 +93,7 @@ async function loadReport() {
     const items = clDoc.exists ? clDoc.data().items : [];
     const results = insp.results || {};
     const notes = insp.notes || {};
-    const photos = insp.photos || {};
+    const photos = insp.photoURLs || insp.photos || {};
     const p = insp.pass||0, f = insp.fail||0, na = insp.na||0, out = insp.outstanding||0;
     const allPass = f===0 && out===0;
     const verdict = allPass ? 'PASSED' : 'REQUIRES RECTIFICATION';
