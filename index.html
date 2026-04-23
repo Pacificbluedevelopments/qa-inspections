@@ -1479,6 +1479,7 @@ function addPCLine(itemId, part) {
   lineInput.placeholder = 'Describe item…';
   lineInput.style.cssText = 'flex:1;padding:10px 12px;font-size:13px;border:1.5px solid #E4E0DA;border-radius:8px;background:#F7F6F4;color:#1A1F24;outline:none;';
   lineInput.oninput = function() { updatePCLines(itemId, part); };
+  lineInput.onblur = function() { updatePCLines(itemId, part); };
 
   var delBtn = document.createElement('button');
   delBtn.textContent = '×';
@@ -1554,9 +1555,19 @@ function removePCPhoto(id, idx, wrap) {
 }
 
 function goToPCSignatures() {
-  // Sync all line items before proceeding
+  // Sync all line items while pc-check screen is still visible
   ['part1','part2'].forEach(function(part) {
-    pcItems[part].forEach(function(item) { updatePCLines(item.id, part); });
+    pcItems[part].forEach(function(item) {
+      var linesList = document.getElementById('pclines-' + item.id);
+      if (linesList) {
+        var inputs = linesList.querySelectorAll('input');
+        item.lines = Array.from(inputs).map(function(inp){ return inp.value.trim(); }).filter(Boolean);
+      }
+      var tradeEl = document.getElementById('pctrade-' + item.id);
+      if (tradeEl) item.trade = tradeEl.value || '';
+      var rectEl = document.getElementById('pcrect-' + item.id);
+      if (rectEl && rectEl.value) item.rectDate = new Date(rectEl.value).toLocaleDateString('en-AU',{day:'2-digit',month:'short',year:'numeric'});
+    });
   });
   document.getElementById('sig-owner-name').textContent = pcData.owner;
   // Populate declaration with actual date and owner
@@ -1652,10 +1663,6 @@ async function completePCCertificate() {
     item.photos = (uploadedPhotos[item.id] || pcPhotos[item.id] || []).filter(Boolean);
   });
 
-  // Final sync of all line items
-  ['part1','part2'].forEach(function(part) {
-    pcItems[part].forEach(function(item) { updatePCLines(item.id, part); });
-  });
   const certData = {
     ...pcData,
     part1: pcItems.part1,
