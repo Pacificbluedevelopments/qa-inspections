@@ -1362,7 +1362,7 @@ function addPCItem(part) {
   div.className = 'pc-item';
   div.id = 'pcitem-' + id;
 
-  // Build using DOM to avoid string escaping issues
+  // Trade header row
   var header = document.createElement('div');
   header.className = 'pc-item-header';
 
@@ -1381,13 +1381,7 @@ function addPCItem(part) {
   header.appendChild(removeBtn);
   div.appendChild(header);
 
-  var textarea = document.createElement('textarea');
-  textarea.id = 'pcdesc-' + id;
-  textarea.placeholder = 'Describe the defect or omission…';
-  textarea.style.cssText = 'width:100%;padding:10px 12px;font-size:13px;border:1.5px solid #E4E0DA;border-radius:8px;background:#F7F6F4;color:#1A1F24;outline:none;resize:none;min-height:64px;line-height:1.5;margin-bottom:10px;display:block;';
-  textarea.oninput = function() { updatePCItemById(id, part); };
-  div.appendChild(textarea);
-
+  // Badge row
   var badgeRow = document.createElement('div');
   badgeRow.className = 'pc-badge-row';
   var defectBtn = document.createElement('button');
@@ -1404,6 +1398,24 @@ function addPCItem(part) {
   badgeRow.appendChild(omissionBtn);
   div.appendChild(badgeRow);
 
+  // Bullet list for description lines
+  var listLabel = document.createElement('label');
+  listLabel.style.cssText = 'display:block;font-size:11px;font-weight:600;color:#9A9690;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;margin-top:10px;';
+  listLabel.textContent = 'Items';
+  div.appendChild(listLabel);
+
+  var linesList = document.createElement('div');
+  linesList.id = 'pclines-' + id;
+  linesList.style.marginBottom = '8px';
+  div.appendChild(linesList);
+
+  var addLineBtn = document.createElement('button');
+  addLineBtn.textContent = '+ Add line item';
+  addLineBtn.style.cssText = 'background:transparent;border:1px dashed #E4E0DA;border-radius:7px;padding:7px 14px;font-size:12px;color:#9A9690;cursor:pointer;margin-bottom:10px;width:100%;text-align:left;';
+  addLineBtn.onclick = function() { addPCLine(id, part); };
+  div.appendChild(addLineBtn);
+
+  // Rect date (Part 1 only)
   if (part === 'part1') {
     var rectWrap = document.createElement('div');
     rectWrap.style.marginBottom = '10px';
@@ -1420,6 +1432,7 @@ function addPCItem(part) {
     div.appendChild(rectWrap);
   }
 
+  // Photo section
   var photoLabel = document.createElement('label');
   photoLabel.style.cssText = 'display:block;font-size:11px;font-weight:600;color:#9A9690;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;';
   photoLabel.textContent = 'Photos';
@@ -1444,7 +1457,51 @@ function addPCItem(part) {
   div.appendChild(photoAddLabel);
 
   container.appendChild(div);
-  pcItems[part].push({ id: id, trade:'', desc:'', badge:'', rectDate:'', photos:[] });
+  pcItems[part].push({ id: id, trade:'', lines:[], badge:'', rectDate:'', photos:[] });
+
+  // Add first line automatically
+  addPCLine(id, part);
+}
+
+function addPCLine(itemId, part) {
+  var linesList = document.getElementById('pclines-' + itemId);
+  if (!linesList) return;
+  var lineIdx = linesList.children.length;
+  var lineRow = document.createElement('div');
+  lineRow.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;';
+
+  var bullet = document.createElement('span');
+  bullet.textContent = '•';
+  bullet.style.cssText = 'color:#B7B09C;font-size:16px;padding-top:10px;flex-shrink:0;';
+
+  var lineInput = document.createElement('input');
+  lineInput.type = 'text';
+  lineInput.placeholder = 'Describe item…';
+  lineInput.style.cssText = 'flex:1;padding:10px 12px;font-size:13px;border:1.5px solid #E4E0DA;border-radius:8px;background:#F7F6F4;color:#1A1F24;outline:none;';
+  lineInput.oninput = function() { updatePCLines(itemId, part); };
+
+  var delBtn = document.createElement('button');
+  delBtn.textContent = '×';
+  delBtn.style.cssText = 'background:none;border:none;color:#ccc;font-size:18px;cursor:pointer;padding:8px 4px;flex-shrink:0;';
+  delBtn.onclick = function() {
+    lineRow.remove();
+    updatePCLines(itemId, part);
+  };
+
+  lineRow.appendChild(bullet);
+  lineRow.appendChild(lineInput);
+  lineRow.appendChild(delBtn);
+  linesList.appendChild(lineRow);
+  lineInput.focus();
+}
+
+function updatePCLines(itemId, part) {
+  var arr = pcItems[part];
+  var item = arr.find(function(i){ return i.id === itemId; });
+  if (!item) return;
+  var linesList = document.getElementById('pclines-' + itemId);
+  if (!linesList) return;
+  item.lines = Array.from(linesList.querySelectorAll('input')).map(function(inp){ return inp.value.trim(); }).filter(Boolean);
 }
 
 
@@ -1453,13 +1510,12 @@ function updatePCItemById(id, part) {
   var item = arr.find(function(i){ return i.id === id; });
   if (!item) return;
   var tradeEl = document.getElementById('pctrade-'+id);
-  var descEl = document.getElementById('pcdesc-'+id);
   var rectEl = document.getElementById('pcrect-'+id);
   if (tradeEl) item.trade = tradeEl.value || '';
-  if (descEl) item.desc = descEl.value || '';
   if (rectEl && rectEl.value) {
     item.rectDate = new Date(rectEl.value).toLocaleDateString('en-AU',{day:'2-digit',month:'short',year:'numeric'});
   }
+  // Lines updated separately by updatePCLines
 }
 function updatePCItem(el) { /* legacy - unused */ }
 
@@ -1498,6 +1554,10 @@ function removePCPhoto(id, idx, wrap) {
 }
 
 function goToPCSignatures() {
+  // Sync all line items before proceeding
+  ['part1','part2'].forEach(function(part) {
+    pcItems[part].forEach(function(item) { updatePCLines(item.id, part); });
+  });
   document.getElementById('sig-owner-name').textContent = pcData.owner;
   // Populate declaration with actual date and owner
   const declEl = document.getElementById('sig-declaration-text');
@@ -1592,6 +1652,10 @@ async function completePCCertificate() {
     item.photos = (uploadedPhotos[item.id] || pcPhotos[item.id] || []).filter(Boolean);
   });
 
+  // Final sync of all line items
+  ['part1','part2'].forEach(function(part) {
+    pcItems[part].forEach(function(item) { updatePCLines(item.id, part); });
+  });
   const certData = {
     ...pcData,
     part1: pcItems.part1,
@@ -2214,6 +2278,8 @@ window.goToPCSignatures=goToPCSignatures;
 window.clearSig=clearSig;
 window.captureSig=captureSig;
 window.completePCCertificate=completePCCertificate;
+window.addPCLine=addPCLine;
+window.updatePCLines=updatePCLines;
 window.loadPCCertificates=loadPCCertificates;
 window.openPCCertificate=openPCCertificate;
 </script>
