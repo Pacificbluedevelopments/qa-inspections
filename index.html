@@ -750,40 +750,2044 @@ document.getElementById('login-password').addEventListener('keydown', e => { if(
 // ── CHECKLISTS ────────────────────────────────────────────────────────────
 async function seedDefaultChecklists() {
   const snap = await db.collection('checklists').get();
-  if (!snap.empty) return;
-  const defaults = [
-    { label:"Slab – Post Pour", order:1, items:[
-      {name:"Surface finish",desc:"Slab surface is smooth, trowelled to specification, free from ridges, tears, or trowel marks"},
-      {name:"Level / fall",desc:"Surface level within tolerance (±10 mm) or correct fall to drainage where required per plans"},
-      {name:"Cracks",desc:"No structural cracking present; any minor plastic shrinkage cracks within acceptable limits"},
-      {name:"Edge profiles",desc:"Slab edges straight, formed to correct depth and profile, free from honeycombing or voids"},
-      {name:"Rebate / step-downs",desc:"All rebates (garage, alfresco, wet areas) at correct depth and location per approved plans"},
-      {name:"Holding down bolts",desc:"HD bolts correctly located, plumb, and at correct projection height per engineer's specification"},
-      {name:"Service penetrations",desc:"All pipe and conduit penetrations in correct location; properly sealed around penetrations"},
-      {name:"Cover to reinforcement",desc:"Reinforcement not visible at surface or edges; minimum cover maintained throughout"},
-      {name:"Dimensional check",desc:"Slab dimensions (length, width, thickness) verified against approved drawings"},
-    ]},
-    { label:"Defect Register", order:0, isDefectRegister:true, items:[] },
-    { label:"Frame", order:2, items:[
-      {name:"Structural members",desc:"All structural timber members are correct size, grade, and species per engineer's specification"},
-      {name:"Wall frame plumb",desc:"All wall frames plumb within 3 mm per 1200 mm height; no bowing or twisting"},
-      {name:"Wall frame straightness",desc:"Wall frames straight and true; no deviation greater than 5 mm over full height"},
-      {name:"Nogging spacing",desc:"Noggings installed at correct spacing per plans; correctly fixed to studs"},
-      {name:"Top plate continuity",desc:"Double top plates lapped and fixed correctly at all joints and corners"},
-      {name:"Bottom plate fixing",desc:"Bottom plates secured to slab or floor with correct anchor bolts at required spacing"},
-      {name:"Stud spacing",desc:"Stud spacing correct throughout — typically 450 mm or 600 mm centres per structural drawings"},
-      {name:"Corner framing",desc:"Corner framing correctly assembled with minimum three studs; adequate fixing"},
-      {name:"Door & window openings",desc:"All door and window openings correct size and location per plans; lintels correct size"},
-      {name:"Lintel bearing",desc:"All lintels have minimum required bearing at each end; correctly seated"},
-      {name:"Bracing – wall",desc:"Structural wall bracing installed per bracing schedule; correct type, location, and fixing"},
-      {name:"Tie-down connections",desc:"All tie-down straps and connectors installed at correct locations per engineer's drawings"},
-      {name:"Framing connections",desc:"Joist hangers, hurricane ties, and all connectors correctly installed with full nail pattern"},
-      {name:"Notching & drilling",desc:"All notching and drilling within allowable limits; no unauthorised cuts to members"},
-      {name:"Dimensional check",desc:"Overall building dimensions, setouts, and heights verified against approved drawings"},
-    ]},
-  ];
-  for (const cl of defaults) await db.collection('checklists').add(cl);
+  // Only seed if no non-defect-register checklists exist
+  const existing = snap.docs.filter(d => !d.data().isDefectRegister);
+  if (existing.length > 0) return;
+  const checklists = 
+[
+  {
+    "label": "Pre-Site Inspection",
+    "order": 1,
+    "items": [
+      {
+        "name": "Draft plans and engineering",
+        "desc": "Draft architectural and engineering drawings on site? Record any key constraints identified."
+      },
+      {
+        "name": "Boundary pegs",
+        "desc": "Boundary pegs present on site? Record locations and photograph."
+      },
+      {
+        "name": "Water metre",
+        "desc": "Water metre present on site? Record location relative to proposed works."
+      },
+      {
+        "name": "Sewer connection",
+        "desc": "Sewer connection present? Record location and invert level; note any conflicts with proposed works."
+      },
+      {
+        "name": "Stormwater connection",
+        "desc": "Stormwater connection present? Record location and invert level."
+      },
+      {
+        "name": "Electrical connection / pit / overhead — property pole required?",
+        "desc": "Electrical pit, underground connection, or overhead power present? Record location; note if property pole is required."
+      },
+      {
+        "name": "NBN / Telco pit",
+        "desc": "NBN or telco pit present on site? Record location; note if relocation required."
+      },
+      {
+        "name": "Street crossover / kerb",
+        "desc": "Existing crossover present? Suitable for construction traffic? Record condition."
+      },
+      {
+        "name": "Overhead power lines",
+        "desc": "Overhead power lines present? Record clearance distances and note any exclusion zone requirements."
+      },
+      {
+        "name": "Site access – trucks and crane",
+        "desc": "Adequate access for large trucks and crane? Note any constraints with turning, clearance, or ground conditions."
+      },
+      {
+        "name": "Neighbouring structures / fences",
+        "desc": "Neighbouring structures or fences present? Photograph and document condition prior to works."
+      },
+      {
+        "name": "Council hoarding / road closure",
+        "desc": "Council hoarding or road closure required? Record permit requirements."
+      },
+      {
+        "name": "Inspection complete",
+        "desc": "Pre-site constraints inspection complete? Findings documented and reported to project team."
+      }
+    ]
+  },
+  {
+    "label": "Slab – Pre Pour",
+    "order": 2,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved structural and architectural drawings available on site for pour"
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Formwork interior clean and free from debris, standing water, and loose material"
+      },
+      {
+        "name": "Formwork set out",
+        "desc": "Formwork positioned correctly per approved drawings; dimensions checked against site plan"
+      },
+      {
+        "name": "Formwork condition",
+        "desc": "Formwork in good condition; no gaps, splits, or deflection that would affect slab shape"
+      },
+      {
+        "name": "Formwork height",
+        "desc": "Formwork height correct for specified slab thickness throughout; checked with level"
+      },
+      {
+        "name": "Rebate formers",
+        "desc": "All rebate formers installed per slab plan — door, foam, external cladding, and brick rebates. Check Location, size, and depth."
+      },
+      {
+        "name": "Shower trays",
+        "desc": "Shower tray locations and sizes correct per slab plan; all showers accounted for and none missed.Check location, size, and depth."
+      },
+      {
+        "name": "Reinforcement placement",
+        "desc": "Reinforcement correctly placed, lapped, and tied per structural drawings"
+      },
+      {
+        "name": "Reinforcement chair spacing",
+        "desc": "Chairs at correct spacing to maintain specified cover; chairs undamaged and secure"
+      },
+      {
+        "name": "Cover to reinforcement",
+        "desc": "Minimum specified cover achieved on all faces; checked with cover meter or gauge"
+      },
+      {
+        "name": "earth rod",
+        "desc": "earth rod installed and tied to slab mesh"
+      },
+      {
+        "name": "Penetration sleeves",
+        "desc": "All penetration sleeves correctly located, sized, and secured prior to pour"
+      },
+      {
+        "name": "Termite barrier",
+        "desc": "Termite management system installed correctly prior to pour per manufacturer's spec"
+      },
+      {
+        "name": "Vapour barrier",
+        "desc": "Vapour barrier correctly lapped, sealed at penetrations, and free from tears or holes; barrier to protrude past formwork edge to be wrapped up onto slab post pour."
+      },
+      {
+        "name": "Drainage falls",
+        "desc": "Falls to drainage correctly set in formwork; checked against hydraulic drawings"
+      },
+      {
+        "name": "Engineer inspection",
+        "desc": "Structural engineer pre-pour inspection completed and approved in writing"
+      }
+    ]
+  },
+  {
+    "label": "Framing Inspection",
+    "order": 3,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved structural and architectural drawings on site and reviewed by supervisor before inspection commences."
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clear of debris and offcuts; safe access for inspection throughout framing."
+      },
+      {
+        "name": "Plumb, level, and straightness",
+        "desc": "All wall frames checked plumb, level, and straight throughout; no bowing, lean, or twist evident in any frame."
+      },
+      {
+        "name": "Structural posts and beams",
+        "desc": "All structural posts and beams correct size per drawings; plumb, correctly seated, and fixed top and bottom."
+      },
+      {
+        "name": "Steel members – waterproofing",
+        "desc": "Any steel members to be concreted correctly waterproofed by carpenter prior to pour; none missed."
+      },
+      {
+        "name": "Notching and drilling",
+        "desc": "All notching and drilling within allowable limits per NCC; no unauthorised cuts to structural members."
+      },
+      {
+        "name": "Feature walls",
+        "desc": "All feature walls present and correctly framed per plan; locations, sizes, and profiles checked against drawings."
+      },
+      {
+        "name": "Niche sizes and cutouts",
+        "desc": "All niche sizes and cutouts correctly framed per plan; none missed; dimensions checked against drawings.Spray paint for plasters To ensure not missed Confirm size, location, and depth."
+      },
+      {
+        "name": "Manholes",
+        "desc": "All manhole openings correctly framed and located per plan; none missed; correct size and position confirmed."
+      },
+      {
+        "name": "Bulkheads",
+        "desc": "All bulkheads correctly framed; size, depth, and height checked against drawings; none missed."
+      },
+      {
+        "name": "Curved walls and feature items",
+        "desc": "All curved walls and special feature framing items correctly constructed per drawings; none missed."
+      },
+      {
+        "name": "Fireplace framing",
+        "desc": "Fireplace opening correctly framed per drawings and specification; correct size, clearances, and position."
+      },
+      {
+        "name": "Skylight framing",
+        "desc": "Skylight openings correctly framed and located per drawings; correct size and position; none missed."
+      },
+      {
+        "name": "AC access hatch",
+        "desc": "Access hatch opening for air conditioning unit correctly framed; location and size correct per HVAC drawings."
+      },
+      {
+        "name": "Smart roof / smart robe openings",
+        "desc": "All smart roof and smart robe opening sizes correct per drawings; correctly framed and sized; none missed."
+      },
+      {
+        "name": "Barn door frame openings",
+        "desc": "All barn door frame opening sizes correct per door schedule; width and height checked against drawings.Ensure logging for a barn door Track has been installed."
+      },
+      {
+        "name": "Window locations",
+        "desc": "All window openings correctly located; windows centred in rooms where specified per architectural drawings."
+      },
+      {
+        "name": "Window fixing",
+        "desc": "Windows correctly fixed to framing with correct fasteners at specified spacing; solid blocking confirmed in place behind all fixings."
+      },
+      {
+        "name": "Window flashings",
+        "desc": "Head, sill, and jamb flashings correctly installed and sealed on all windows."
+      },
+      {
+        "name": "Window seals and gaskets",
+        "desc": "All window seals and gaskets correctly installed; no gaps or damage."
+      },
+      {
+        "name": "External door locations",
+        "desc": "All external doors installed at correct locations per approved drawings."
+      },
+      {
+        "name": "External door frames",
+        "desc": "Door frames plumb, square, and correctly fixed; no twist or bow."
+      },
+      {
+        "name": "External door seals",
+        "desc": "All external door seals, weatherstripping, and thresholds correctly installed."
+      },
+      {
+        "name": "External door operation",
+        "desc": "All external doors operate correctly; latch and lock function correctly."
+      },
+      {
+        "name": "Scratches and dents",
+        "desc": "All windows and doors inspected for scratches, dents, or damage; any defects noted and reported."
+      },
+      {
+        "name": "Overall weatherproofing",
+        "desc": "All windows and doors correctly sealed; building envelope weathertight at lock-up.Sheeting of internal walls must not be done until the house is completely water tight."
+      },
+      {
+        "name": "Balcony step-downs and falls",
+        "desc": "Balcony step-down heights and fall directions correct per drawings; verified against engineering for wind rating compliance. Waterproof balconies must be installed at 1:80."
+      },
+      {
+        "name": "Stairwell void blocking",
+        "desc": "Blocking correctly installed around all stairwell voids; correctly fixed and sized per structural requirements."
+      },
+      {
+        "name": "Balustrading blocking",
+        "desc": "Blocking correctly installed at all balustrade locations; correctly positioned for balustrade fixing requirements."
+      },
+      {
+        "name": "Balcony handrail nogging",
+        "desc": "Nogging installed at all balcony handrail locations; correct height and spacing for handrail fixing requirements."
+      },
+      {
+        "name": "TV nogging",
+        "desc": "TV nogging installed at correct heights and locations in all applicable rooms; none missed."
+      },
+      {
+        "name": "Garage door nogging",
+        "desc": "Nogging completed at all garage door openings; correct height and position for door hardware fixing."
+      },
+      {
+        "name": "Bathroom accessories item nogging",
+        "desc": "Nogging installed for all feature items including towel rails, robes, shelving, and other wall-fixed elements; none missed."
+      },
+      {
+        "name": "Livable housing blocking",
+        "desc": "Blocking installed at all livable housing locations including handrails, grab rails, and other accessibility requirements; none missed."
+      },
+      {
+        "name": "Insulation, vapour barrier and wall wrap",
+        "desc": "Insulation and vapour barrier correctly installed; wall wrap correctly lapped and fixed; all penetrations sealed."
+      },
+      {
+        "name": "Ceiling battens",
+        "desc": "All ceiling battens correctly installed and in place; check none have been removed or displaced by other trades."
+      },
+      {
+        "name": "Ply bracing.",
+        "desc": "All bracing installed as per engineer's design. And free of damage."
+      },
+      {
+        "name": "Engineer inspection",
+        "desc": "Structural engineer framing inspection completed where required; approval obtained in writing and filed."
+      }
+    ]
+  },
+  {
+    "label": "Roof – Covering",
+    "order": 4,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved drawings on site and reviewed by supervisor before inspection commences."
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Roof area clear of debris and offcuts; safe access for inspection maintained throughout."
+      },
+      {
+        "name": "Tile or sheet type",
+        "desc": "Roofing material correct type, colour, and profile per specification."
+      },
+      {
+        "name": "Batten spacing",
+        "desc": "Batten spacing correct for tile or sheet type per manufacturer's specification."
+      },
+      {
+        "name": "Batten fixing",
+        "desc": "Battens correctly fixed to rafters with correct fasteners at specified spacing."
+      },
+      {
+        "name": "Tile or sheet fixing",
+        "desc": "All tiles or sheets fixed with correct fasteners at specified spacing throughout."
+      },
+      {
+        "name": "Pop rivets",
+        "desc": "All pop rivets spaced no more than 50mm apart throughout; compliant with Australian Standards."
+      },
+      {
+        "name": "Ridge capping",
+        "desc": "Ridge capping correctly installed, bedded or mechanically fixed per specification."
+      },
+      {
+        "name": "Hip capping",
+        "desc": "Hip capping correctly installed and fixed; no gaps or lifting."
+      },
+      {
+        "name": "Valley installation",
+        "desc": "Valley gutters correctly installed; lapped and fixed per specification."
+      },
+      {
+        "name": "Parapet caps",
+        "desc": "Parapet caps complete and correctly installed; all locations checked; none missed."
+      },
+      {
+        "name": "Flashing under seal.",
+        "desc": "Ensure all flashing joints are sealed and fixed appropriately."
+      },
+      {
+        "name": "Flashings – penetrations",
+        "desc": "All penetration flashings correctly installed and sealed; no gaps."
+      },
+      {
+        "name": "Flashings – walls",
+        "desc": "All wall flashings correctly installed; upstand height correct; sealed at top."
+      },
+      {
+        "name": "Gutters – fall",
+        "desc": "Gutters installed with correct fall to downpipes; no sagging or reverse fall."
+      },
+      {
+        "name": "Gutters – fixing",
+        "desc": "Gutters correctly fixed to fascia at correct spacing; no movement."
+      },
+      {
+        "name": "Downpipes – location",
+        "desc": "Downpipe locations confirmed correct per hydraulic drawings; connected to stormwater; none missed."
+      },
+      {
+        "name": "Insulation blanket",
+        "desc": "Insulation blanket installed under roofing per specification; correctly lapped."
+      },
+      {
+        "name": "Completion and appearance",
+        "desc": "Roof covering complete; consistent appearance; no damaged or missing tiles or sheets."
+      },
+      {
+        "name": "On-roof works – roof penetrations",
+        "desc": "All roof penetrations complete before safety rail dismantled; flashings sealed and inspected."
+      },
+      {
+        "name": "On-roof works – solar panel install",
+        "desc": "Solar panel installation complete before safety rail dismantled; fixings, wiring, and penetrations inspected."
+      },
+      {
+        "name": "On-roof works – skylights",
+        "desc": "All skylight installations complete before safety rail dismantled; correctly flashed and sealed."
+      },
+      {
+        "name": "On-roof works – TV antenna install",
+        "desc": "TV antenna installation complete before safety rail dismantled; correctly fixed, cabled, and sealed at penetration."
+      },
+      {
+        "name": "On-roof works – all other items",
+        "desc": "All remaining on-roof works complete and inspected before safety rail is dismantled; nothing outstanding."
+      }
+    ]
+  },
+  {
+    "label": "Scaffold Drop Pre-Check",
+    "order": 5,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved drawings reviewed; all scaffold-dependent works confirmed complete before drop."
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "All scaffold areas clear of materials and debris prior to drop."
+      },
+      {
+        "name": "External painting complete",
+        "desc": "All external painting completed while scaffold is still in place; no areas missed."
+      },
+      {
+        "name": "Downpipes installed",
+        "desc": "All downpipes correctly installed and connected to stormwater; none missed."
+      },
+      {
+        "name": "Electrical fit-offs on scaffold",
+        "desc": "All electrical fit-off items accessible from scaffold completed; external lights, power, and fittings installed."
+      },
+      {
+        "name": "Windows clean",
+        "desc": "All external window glass cleaned while scaffold access available; no smears or residue."
+      },
+      {
+        "name": "Feature items installed",
+        "desc": "All external feature items installed while scaffold is in place; none missed."
+      },
+      {
+        "name": "Solar panels installed",
+        "desc": "Solar panel installation complete; fixings, cabling, and roof penetrations inspected and sealed."
+      },
+      {
+        "name": "Roof penetrations",
+        "desc": "All roof penetrations correctly installed and sealed; flashings complete; none missed."
+      },
+      {
+        "name": "Fireplace chimney",
+        "desc": "Fireplace chimney correctly installed; flashing sealed; correct height above roofline."
+      },
+      {
+        "name": "Plumbing vents",
+        "desc": "All plumbing vent pipes correctly installed and sealed at roof penetrations; correct height above roofline."
+      },
+      {
+        "name": "Caulking and sealing",
+        "desc": "All external caulking and sealing requiring scaffold access completed; no gaps or missed junctions."
+      },
+      {
+        "name": "Balcony handrails",
+        "desc": "All balcony handrails correctly installed; height correct per NCC; secure and operational."
+      },
+      {
+        "name": "All roof items complete",
+        "desc": "All on-roof works confirmed complete; nothing outstanding that requires scaffold or roof access."
+      },
+      {
+        "name": "Parapet caps installed",
+        "desc": "All parapet caps correctly installed and sealed; none missed; checked from scaffold before drop."
+      },
+      {
+        "name": "Scaffold drop approved",
+        "desc": "All scaffold-dependent items confirmed complete; supervisor sign-off obtained before scaffold is dismantled."
+      }
+    ]
+  },
+  {
+    "label": "Rough In – Electrical",
+    "order": 6,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved electrical drawings on site and reviewed by supervisor before inspection commences."
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clear of debris; safe access for inspection throughout."
+      },
+      {
+        "name": "Cable protection",
+        "desc": "Cables correctly protected through framing members; grommets installed."
+      },
+      {
+        "name": "Switchboard location",
+        "desc": "Switchboard correctly located per drawings; correctly fixed and labelled."
+      },
+      {
+        "name": "Circuit identification",
+        "desc": "All circuits correctly identified and labelled in switchboard."
+      },
+      {
+        "name": "Power point locations",
+        "desc": "All power point locations correct per electrical drawings and client brief."
+      },
+      {
+        "name": "Light switch locations",
+        "desc": "All light switch locations correct; correct height per specification."
+      },
+      {
+        "name": "Light fitting locations",
+        "desc": "All ceiling and wall light fitting locations correct per lighting plan."
+      },
+      {
+        "name": "Exhaust fan locations",
+        "desc": "All exhaust fan locations correct; ducting run appropriately and at the shortest possible run to exterior."
+      },
+      {
+        "name": "Kitchen exhaust fan ducting",
+        "desc": "Kitchen exhaust fan ducting run at shortest possible route to exterior; minimal bends; correct duct size."
+      },
+      {
+        "name": "Oven and cooktop circuit",
+        "desc": "Dedicated oven and cooktop circuits correctly installed and sized."
+      },
+      {
+        "name": "Air conditioning circuit",
+        "desc": "Dedicated air conditioning circuits correctly installed and sized."
+      },
+      {
+        "name": "Smoke alarm locations",
+        "desc": "Smoke alarm locations correct per NCC requirements; wiring complete."
+      },
+      {
+        "name": "External lighting",
+        "desc": "External lighting points correctly located; correctly wired."
+      },
+      {
+        "name": "TV and data points",
+        "desc": "TV aerial and data point locations correct per client brief."
+      },
+      {
+        "name": "Earth continuity",
+        "desc": "Earthing correctly installed throughout; connections secure."
+      },
+      {
+        "name": "Fan nogging",
+        "desc": "Ceiling fan nogging installed at all fan locations; correct position and adequately fixed to support fan weight."
+      },
+      {
+        "name": "Pendant nogging",
+        "desc": "Pendant light nogging installed at all pendant locations; correct position per lighting plan."
+      },
+      {
+        "name": "NBN / Telstra locations",
+        "desc": "NBN and Telstra connection points correctly located per client brief; cabling run to correct locations."
+      },
+      {
+        "name": "External screws",
+        "desc": "All external screws to be either galvanised or chemically treated; no untreated screws permitted in external locations."
+      },
+      {
+        "name": "Electrical inspection",
+        "desc": "Licensed electrician rough-in inspection completed; certificate obtained."
+      }
+    ]
+  },
+  {
+    "label": "Rough In – Plumbing",
+    "order": 7,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved hydraulic drawings on site and reviewed by supervisor before inspection commences."
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clear of debris; safe access for inspection throughout."
+      },
+      {
+        "name": "Waste pipe sizing",
+        "desc": "All waste pipes correctly sized per hydraulic specification and NCC requirements; falls correct throughout."
+      },
+      {
+        "name": "Pipe support",
+        "desc": "All pipes correctly supported at required intervals; no sagging.Floor waste on second floors to be supported"
+      },
+      {
+        "name": "Pipe penetration sealing",
+        "desc": "All pipe penetrations through framing correctly sleeved and sealed."
+      },
+      {
+        "name": "Subfloor framing integrity",
+        "desc": "Subfloor framing inspected; stud point locations correct; plumbers have not cut out excessive material from any beams or joists when running pipes."
+      },
+      {
+        "name": "Condensate / tundish dishes",
+        "desc": "Condensate and tundish dishes for AC units correctly located and installed; draining to correct location."
+      },
+      {
+        "name": "Fixture rough-in locations",
+        "desc": "All fixture rough-in positions correct per hydraulic drawings."
+      },
+      {
+        "name": "Shower waste location",
+        "desc": "Shower waste locations correct; correct fall to waste."
+      },
+      {
+        "name": "Bath waste location",
+        "desc": "Bath waste locations correct; accessibility for maintenance considered."
+      },
+      {
+        "name": "Toilet rough-in",
+        "desc": "Toilet pan connector correctly located; correct height and set-out."
+      },
+      {
+        "name": "Basin rough-in",
+        "desc": "Basin supply and waste correctly located per vanity specification."
+      },
+      {
+        "name": "Kitchen rough-in",
+        "desc": "Kitchen sink supply and waste correctly located; dishwasher provision correct."
+      },
+      {
+        "name": "Laundry rough-in",
+        "desc": "Laundry trough and washing machine connections correctly located."
+      },
+      {
+        "name": "Hot water system",
+        "desc": "Hot water system correctly located, supported, and connected."
+      },
+      {
+        "name": "Gas rough-in",
+        "desc": "Gas lines correctly routed, sized, and pressure-tested where applicable.Check if BBQ line is required."
+      },
+      {
+        "name": "Stormwater connections",
+        "desc": "Stormwater connections correctly made; falls correct."
+      },
+      {
+        "name": "External tap locations",
+        "desc": "External tap locations confirmed correct per drawings and client brief; none missed."
+      },
+      {
+        "name": "Wall-hung vanity noggings",
+        "desc": "Wall-hung vanity noggings installed where required; correct height and position per vanity specification."
+      },
+      {
+        "name": "Stack location",
+        "desc": "Stack location confirmed correct per hydraulic drawings; correctly positioned and supported."
+      },
+      {
+        "name": "Fridge tap",
+        "desc": "Fridge tap installed at correct location; correctly connected and operational."
+      },
+      {
+        "name": "Water filter",
+        "desc": "Water filter installed if required; location correct; correctly connected to supply."
+      },
+      {
+        "name": "Water tank feeds",
+        "desc": "Water tank feed connections present if required; correctly routed and connected."
+      },
+      {
+        "name": "External screws",
+        "desc": "All external screws to be either galvanised or chemically treated; no untreated screws permitted in external locations."
+      },
+      {
+        "name": "Plumbing inspection",
+        "desc": "Licensed plumber rough-in inspection completed; certificate obtained."
+      }
+    ]
+  },
+  {
+    "label": "Rough In – Air Conditioning",
+    "order": 8,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved drawings available on site; installation to match approved design"
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clean and free from debris; previous trade materials removed before inspection"
+      },
+      {
+        "name": "Duct routing",
+        "desc": "All ductwork correctly routed per HVAC drawings; no unauthorised deviations"
+      },
+      {
+        "name": "Duct sizing",
+        "desc": "All duct sizes correct per HVAC specification; no reductions without approval"
+      },
+      {
+        "name": "Duct support",
+        "desc": "All ductwork correctly supported at required intervals; no sagging"
+      },
+      {
+        "name": "Supply outlet locations",
+        "desc": "All supply air outlet locations correct per HVAC drawings"
+      },
+      {
+        "name": "Return air locations",
+        "desc": "Return air grille locations correct; return air path unobstructed"
+      },
+      {
+        "name": "Indoor unit location",
+        "desc": "Indoor unit correctly located; access for maintenance provided"
+      },
+      {
+        "name": "Outdoor unit location",
+        "desc": "Outdoor unit correctly located; correct clearances maintained"
+      },
+      {
+        "name": "Refrigerant line routing",
+        "desc": "Refrigerant lines correctly routed and insulated"
+      },
+      {
+        "name": "Electrical supply",
+        "desc": "Correct electrical supply run to indoor and outdoor units"
+      },
+      {
+        "name": "Exhaust fan ducting",
+        "desc": "All exhaust fan ducting correctly routed to exterior; no recirculation"
+      },
+      {
+        "name": "Duct sealing",
+        "desc": "All duct joints correctly sealed; no air leakage at connections"
+      },
+      {
+        "name": "Insulation",
+        "desc": "All ductwork correctly insulated where required per specification"
+      },
+      {
+        "name": "Condensate drainage",
+        "desc": "Condensate drainage to drain to a tundish/vent dish; if connecting to a water tank confirm correct vent dish is installed; no direct connection to stormwater without tundish."
+      },
+      {
+        "name": "Remote control location",
+        "desc": "Remote control holder location confirmed; correctly positioned per client brief and drawings."
+      },
+      {
+        "name": "External screws",
+        "desc": "All external screws to be either galvanised or chemically treated; no untreated screws permitted in external locations."
+      },
+      {
+        "name": "Inspection hatch location",
+        "desc": "Inspection hatch for internal AC unit correctly located and framed; adequate access for maintenance confirmed."
+      },
+      {
+        "name": "Air conditioning inspection",
+        "desc": "HVAC contractor inspection completed; system ready for commissioning"
+      }
+    ]
+  },
+  {
+    "label": "Insulation",
+    "order": 9,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved drawings available on site; installation to match approved design"
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clean and free from debris; previous trade materials removed before inspection"
+      },
+      {
+        "name": "Wall insulation type",
+        "desc": "Wall insulation correct type and R-value per specification and NCC requirements"
+      },
+      {
+        "name": "Wall insulation installation",
+        "desc": "Wall insulation correctly installed in all external wall cavities; no gaps"
+      },
+      {
+        "name": "Ceiling insulation type",
+        "desc": "Ceiling insulation correct type and R-value per specification"
+      },
+      {
+        "name": "Ceiling insulation installation",
+        "desc": "Ceiling insulation correctly installed; full coverage with no gaps or compression"
+      },
+      {
+        "name": "Ceiling insulation depth",
+        "desc": "Ceiling insulation at correct depth throughout; checked at multiple points"
+      },
+      {
+        "name": "Specialty insulation",
+        "desc": "Confirm any specialty insulation is installed (i.e., acoustic batts, fire batts)."
+      },
+      {
+        "name": "Insulation continuity",
+        "desc": "No thermal bridges or gaps in insulation at junctions, corners, or penetrations"
+      },
+      {
+        "name": "Penetration sealing",
+        "desc": "All penetrations through insulation correctly sealed to maintain thermal envelope"
+      },
+      {
+        "name": "Batts condition",
+        "desc": "All insulation batts undamaged; no compression, tears, or moisture damage"
+      },
+      {
+        "name": "Clearance from fittings",
+        "desc": "Correct clearance maintained between insulation and recessed light fittings"
+      },
+      {
+        "name": "External wall wrap",
+        "desc": "External wall wrap correctly installed; lapped and taped per specification"
+      },
+      {
+        "name": "NCC compliance",
+        "desc": "Overall insulation installation meets NCC energy efficiency requirements"
+      },
+      {
+        "name": "Inspection complete",
+        "desc": "Insulation inspection completed before lining commences; documented"
+      }
+    ]
+  },
+  {
+    "label": "Lining – Plasterboard",
+    "order": 10,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved drawings available on site; installation to match approved design"
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clean and free from debris; previous trade materials removed before inspection"
+      },
+      {
+        "name": "Sheet type and thickness",
+        "desc": "Correct plasterboard type and thickness used in each area per specification"
+      },
+      {
+        "name": "Wet area lining",
+        "desc": "Moisture-resistant plasterboard used in all wet areas; correctly identified"
+      },
+      {
+        "name": "Fire-rated and/or acoustic areas",
+        "desc": "Fire-rated plasterboard And/or acoustic  correctly installed in required locations per NCC"
+      },
+      {
+        "name": "Sheet fixing spacing",
+        "desc": "Sheets fixed at correct fastener spacing per manufacturer's specification"
+      },
+      {
+        "name": "Fastener type",
+        "desc": "Correct fastener type used throughout; no over-driven or under-driven screws"
+      },
+      {
+        "name": "Internal corner treatment",
+        "desc": "Internal corners correctly taped and set; no cracking or movement"
+      },
+      {
+        "name": "External corner treatment",
+        "desc": "External corners protected with correct bead; plumb and straight"
+      },
+      {
+        "name": "Penetration treatment",
+        "desc": "All penetrations correctly cut and fitted; no oversized holes"
+      },
+      {
+        "name": "Cornice/squareset installation",
+        "desc": "Cornice/square set correctly fixed and set; level and consistent profile throughout"
+      },
+      {
+        "name": "Surface preparation",
+        "desc": "All joints and fasteners correctly set; surface ready for painting"
+      },
+      {
+        "name": "Sheet condition",
+        "desc": "All sheets free from damage, water staining, or impact damage"
+      },
+      {
+        "name": "Acoustic linings",
+        "desc": "Acoustic linings correctly installed in all required areas; correct product used per specification."
+      },
+      {
+        "name": "Shower step-down gap",
+        "desc": "Gap at shower step-down no more than 6mm; check all showers throughout."
+      },
+      {
+        "name": "Full-height tiling – fixing",
+        "desc": "In bathrooms and wet areas with full-height tiling, plasterboard sheets screwed off at correct spacing to provide adequate substrate for tiling."
+      },
+      {
+        "name": "Wet area lining – WR board",
+        "desc": "All wet area linings confirmed as WR (water resistant) board throughout; standard plasterboard not permitted in wet areas. Rooms with full hot tiles: corners should still be set to reduce movement."
+      },
+      {
+        "name": "Expansion joints",
+        "desc": "Expansion joints installed in walls and ceilings at maximum 13m intervals; correctly positioned and formed."
+      },
+      {
+        "name": "Unauthorised holes",
+        "desc": "All plasterboard sheets inspected for unnecessary holes or damage where no light or power outlet exists; all defects marked for repair."
+      },
+      {
+        "name": "Inspection complete",
+        "desc": "Lining inspection completed; all defects rectified before painting commences"
+      }
+    ]
+  },
+  {
+    "label": "Waterproofing",
+    "order": 11,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved drawings available on site; installation to match approved design"
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clean and free from debris; previous trade materials removed before inspection"
+      },
+      {
+        "name": "Substrate preparation",
+        "desc": "All substrates correctly prepared; clean, dry, and free from contamination prior to waterproofing"
+      },
+      {
+        "name": "Membrane type",
+        "desc": "Correct waterproofing membrane type used per specification and AS 3740 requirements"
+      },
+      {
+        "name": "Membrane to floor",
+        "desc": "Waterproofing membrane correctly applied to all wet area floors; no pinholes or voids"
+      },
+      {
+        "name": "Membrane to walls",
+        "desc": "Waterproofing membrane correctly applied to walls to specified height; shower walls full height"
+      },
+      {
+        "name": "Upstand height",
+        "desc": "Minimum upstand height achieved at all junctions per AS 3740; shower 1800mm, bath/laundry 150mm"
+      },
+      {
+        "name": "Hob waterproofing",
+        "desc": "Shower hob correctly waterproofed; membrane turned over hob and down both faces"
+      },
+      {
+        "name": "Penetration sealing",
+        "desc": "All penetrations through membrane correctly sealed with correct collar or boot"
+      },
+      {
+        "name": "Internal corners",
+        "desc": "All internal corners reinforced with bandage or fabric; no bridging or lifting"
+      },
+      {
+        "name": "Membrane cure time",
+        "desc": "Correct cure time observed before flood test; manufacturer's specification followed"
+      },
+      {
+        "name": "Protection of membrane",
+        "desc": "Waterproofing membrane protected from damage before tiling commences"
+      },
+      {
+        "name": "Shower tray angles",
+        "desc": "Shower tray angles correctly installed in all showers; none missed; correctly positioned for drainage. Ensure colour matches schedule of finish."
+      },
+      {
+        "name": "Water stop at entry",
+        "desc": "Water stop correctly installed at the entry of each wet area room; none missed. Ensure colour matches the schedule of finish."
+      },
+      {
+        "name": "Balcony waterproofing.",
+        "desc": "External tile trim to be re-caulked into flooring. No lippage."
+      },
+      {
+        "name": "Inspection complete",
+        "desc": "Waterproofing inspection passed and documented; tiling approved to commence"
+      }
+    ]
+  },
+  {
+    "label": "Joinery",
+    "order": 12,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved drawings available on site; installation to match approved design"
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clean and free from debris; previous trade materials removed before inspection"
+      },
+      {
+        "name": "Cabinet type and finish",
+        "desc": "All cabinets correct type, colour, and finish per specification and client selection"
+      },
+      {
+        "name": "Cabinet delivery inspection",
+        "desc": "All cabinets inspected on delivery; no damage, correct items and quantities confirmed"
+      },
+      {
+        "name": "Cabinet fixing",
+        "desc": "All cabinets correctly fixed to wall and floor; level, plumb, and square"
+      },
+      {
+        "name": "Cabinet alignment",
+        "desc": "All cabinets correctly aligned; consistent reveal and gap between doors and drawers"
+      },
+      {
+        "name": "Door operation",
+        "desc": "All cabinet doors operate correctly; soft-close mechanism functional throughout"
+      },
+      {
+        "name": "Drawer operation",
+        "desc": "All drawers operate correctly; soft-close mechanism functional; no binding"
+      },
+      {
+        "name": "Handle installation",
+        "desc": "All handles correctly installed at correct location; level and consistent height throughout"
+      },
+      {
+        "name": "Benchtop installation",
+        "desc": "Benchtops correctly installed; level; correctly supported; joins tight. If benchtop has a waterfall end, confirm it is raised 17mm from floor level to allow engineered flooring to flow beneath for expansion."
+      },
+      {
+        "name": "Benchtop power outlets",
+        "desc": "Any power outlets cut into stone benchtop checked; correctly sized, positioned, and finished; no cracking or chipping around cutouts."
+      },
+      {
+        "name": "Sink cutout",
+        "desc": "Sink cutout correct size and location; correctly sealed around sink"
+      },
+      {
+        "name": "Overhead cabinets",
+        "desc": "All overhead cabinets level and plumb; correctly fixed to wall; adequate support"
+      },
+      {
+        "name": "Internal fittings",
+        "desc": "All internal cabinet fittings including shelves, bins, and cutlery inserts correctly installed"
+      },
+      {
+        "name": "Toe kick",
+        "desc": "Toe kick correctly installed and fixed; consistent gap at floor level. If flooring is engineered timber, toe kick to be left off and installed after flooring to allow for expansion."
+      },
+      {
+        "name": "Floating shelving",
+        "desc": "All floating shelving correctly installed; tight to wall with gap no more than 3mm to allow for painting; level and secure."
+      },
+      {
+        "name": "Cabinet study desk cable holes",
+        "desc": "Cable access holes drilled in study behind cabinets; protective cap or grommet installed in each hole to allow pipes and wires to run through."
+      },
+      {
+        "name": "Dishwasher and washing machine holes",
+        "desc": "Cable and pipe access holes drilled for dishwasher and washing machine locations; grommet or cap installed to allow pipe and wire to run through cleanly."
+      },
+      {
+        "name": "Basin installation",
+        "desc": "All basins correctly installed by cabinet maker; level; correctly sealed to wall and vanity."
+      },
+      {
+        "name": "Kitchen sink installation",
+        "desc": "Kitchen sink correctly installed by cabinet maker; level; correctly sealed; waste connected."
+      },
+      {
+        "name": "Final inspection",
+        "desc": "Joinery complete and inspected; all defects rectified before next trade commences"
+      }
+    ]
+  },
+  {
+    "label": "Stair Install",
+    "order": 13,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved drawings available on site; installation to match approved design"
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clean and free from debris; previous trade materials removed before inspection"
+      },
+      {
+        "name": "Stair type and material",
+        "desc": "Stair type, material, and finish correct per specification and client selection"
+      },
+      {
+        "name": "Structural support",
+        "desc": "Stair stringers and support structure correctly fixed; no movement; per structural drawings"
+      },
+      {
+        "name": "Tread dimensions",
+        "desc": "All tread and riser dimensions within NCC allowable limits; all risers within 5mm of each other and all treads within 5mm of each other throughout the full stair run."
+      },
+      {
+        "name": "Tread fixing",
+        "desc": "All treads correctly fixed; no movement or squeaking; correct fasteners used Ensure no face fixed tread fixings."
+      },
+      {
+        "name": "Riser installation",
+        "desc": "All risers correctly installed; tight to treads; no gaps"
+      },
+      {
+        "name": "Handrail height",
+        "desc": "Handrail at correct height throughout; 865–1000mm above nosing per NCC"
+      },
+      {
+        "name": "Handrail fixing",
+        "desc": "Handrail correctly fixed at top, bottom, and intermediate brackets; no movement"
+      },
+      {
+        "name": "Balustrade height",
+        "desc": "Balustrade at correct height per NCC; 1000mm minimum on landings and above"
+      },
+      {
+        "name": "Balustrade openings",
+        "desc": "All balustrade openings within NCC limits; 125mm sphere test passed throughout"
+      },
+      {
+        "name": "Newel post fixing",
+        "desc": "Newel posts correctly fixed; plumb; no movement under load"
+      },
+      {
+        "name": "Landing construction",
+        "desc": "Landing correctly constructed; level; correct dimensions per NCC"
+      },
+      {
+        "name": "Headroom clearance",
+        "desc": "Minimum headroom clearance maintained throughout stair run per NCC 2.1m nose to ceiling verticaly."
+      },
+      {
+        "name": "Nosing profile",
+        "desc": "Stair nosings correct profile; slip resistant; within NCC projection limits"
+      },
+      {
+        "name": "Stair condition",
+        "desc": "All stair components free from damage, splits, or defects; correct to specification"
+      },
+      {
+        "name": "Timber plugs",
+        "desc": "All timber plugs installed with similar-coloured timber; grain direction matching surrounding timber; no mismatched plugs."
+      },
+      {
+        "name": "Tread protection",
+        "desc": "MDF protective covers installed by stair installer over all stair treads; no treads left exposed to construction traffic."
+      },
+      {
+        "name": "Final inspection",
+        "desc": "Stair installation complete and inspected; all defects rectified; NCC compliance confirmed"
+      }
+    ]
+  },
+  {
+    "label": "Tiling",
+    "order": 14,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved drawings available on site; installation to match approved design"
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clean and free from debris; previous trade materials removed before inspection"
+      },
+      {
+        "name": "Cleaning",
+        "desc": "All tiles correctly cleaned; grout haze removed; surfaces ready for inspection"
+      },
+      {
+        "name": "Tile type and colour",
+        "desc": "Tiles correct type, colour, and size per specification and client selection"
+      },
+      {
+        "name": "Substrate preparation",
+        "desc": "Substrate correctly prepared; level, clean, and free from contamination"
+      },
+      {
+        "name": "Tile layout",
+        "desc": "Tile layout correct per drawings; cuts balanced and consistent"
+      },
+      {
+        "name": "Adhesive type",
+        "desc": "Correct adhesive type used for tile type and substrate; coverage correct"
+      },
+      {
+        "name": "Tile fixing",
+        "desc": "Tiles correctly fixed; full bed of adhesive; no hollow tiles; lippage within tolerance"
+      },
+      {
+        "name": "Grout type and colour",
+        "desc": "Correct grout type and colour used per specification"
+      },
+      {
+        "name": "Grout joints",
+        "desc": "Grout joints consistent width throughout; correctly filled with no voids"
+      },
+      {
+        "name": "Expansion joints",
+        "desc": "Expansion joints correctly installed at all required locations; all joints caulked with no gap greater than 3mm; joints clean and free of debris before caulking."
+      },
+      {
+        "name": "Wall to floor junction",
+        "desc": "Wall to floor junctions correctly caulked with flexible sealant"
+      },
+      {
+        "name": "Floor fall – wet areas",
+        "desc": "Correct falls to drains in all wet areas; no ponding"
+      },
+      {
+        "name": "Tile condition",
+        "desc": "All tiles free from chips, cracks, or damage; correct to specification"
+      },
+      {
+        "name": "Tile lippage",
+        "desc": "No greater than 1mm lip between adjacent tiles throughout; any lippage exceeding tolerance to be noted and rectified."
+      },
+      {
+        "name": "Shower tray fall",
+        "desc": "Shower trays confirmed with minimum 1:80 fall to drain; no ponding or flat spots."
+      },
+      {
+        "name": "Step-free shower threshold",
+        "desc": "Bathrooms noted on plans as step-free to have shower threshold step no greater than 5mm; confirm against drawings."
+      },
+      {
+        "name": "Shower drain condition",
+        "desc": "All shower drains free of debris and clean; drain covers correctly installed and operational."
+      },
+      {
+        "name": "Tile cuts at fixtures",
+        "desc": "All tile cuts around BP and plumbing fixtures no greater than 3mm gap; neatly cut and consistent."
+      },
+      {
+        "name": "External balcony tiling",
+        "desc": "External balcony tiling procedure followed: F-Off adhesive and grout used throughout; tiles laid, grouted, and caulked entirely within a dry period with no rain or water exposure; procedure followed to reduce risk of efflorescence on waterproofed tiled balcony."
+      },
+      {
+        "name": "vertical tile tops – grout flush",
+        "desc": "Tops of all wall tiles grouted flush; no gap between top of tile and plasterboard permitted."
+      },
+      {
+        "name": "Completion inspection",
+        "desc": "Tiling complete and inspected; all defects rectified before handover"
+      }
+    ]
+  },
+  {
+    "label": "Painting",
+    "order": 15,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved drawings available on site; installation to match approved design"
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clean and free from debris; previous trade materials removed before inspection"
+      },
+      {
+        "name": "Cleaning",
+        "desc": "All paint splashes removed from floors, tiles, and fittings"
+      },
+      {
+        "name": "Surface preparation",
+        "desc": "All surfaces correctly prepared; filled, sanded, and primed as required"
+      },
+      {
+        "name": "Paint type and colour",
+        "desc": "Correct paint type and colour used per specification and client selection"
+      },
+      {
+        "name": "Primer coats",
+        "desc": "Correct primer applied to all required surfaces; coverage consistent"
+      },
+      {
+        "name": "Ceiling paint",
+        "desc": "Ceiling paint applied correctly; minimum required coats; consistent sheen"
+      },
+      {
+        "name": "Wall paint – cut in",
+        "desc": "Wall paint cut in correctly at all edges, corners, and junctions; no overspray"
+      },
+      {
+        "name": "Wall paint – roller",
+        "desc": "Wall paint rolled consistently; minimum required coats; no roller marks or holidays"
+      },
+      {
+        "name": "Trim paint",
+        "desc": "All skirtings, architraves, and door frames correctly painted; sheen consistent"
+      },
+      {
+        "name": "Door painting",
+        "desc": "All doors correctly painted on all faces including top and bottom edges; correct sheen level; no bare timber exposed on any edge."
+      },
+      {
+        "name": "Window painting",
+        "desc": "All window frames and reveals correctly painted; no paint on glass"
+      },
+      {
+        "name": "External painting",
+        "desc": "All external surfaces correctly painted; correct paint type for exposure"
+      },
+      {
+        "name": "Paint condition",
+        "desc": "All painted surfaces free from runs, sags, brush marks, and contamination"
+      },
+      {
+        "name": "Touch up complete",
+        "desc": "All touch-ups complete; paint matches existing surfaces"
+      },
+      {
+        "name": "Hardware protection",
+        "desc": "All door furniture, tapware, and fittings correctly protected Or removed during painting"
+      },
+      {
+        "name": "Wet area sealing",
+        "desc": "All tops of tiles and architrave trims in wet areas sealed with gap filler and paint; continuous seal with no gaps per Australian Standards."
+      },
+      {
+        "name": "Final inspection",
+        "desc": "Painting complete and inspected; all defects rectified before handover"
+      }
+    ]
+  },
+  {
+    "label": "Fix Out – Carpentry",
+    "order": 16,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved drawings available on site; installation to match approved design"
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clean and free from debris; previous trade materials removed before inspection"
+      },
+      {
+        "name": "Door hanging",
+        "desc": "All doors correctly hung; correct clearances top, bottom, and sides"
+      },
+      {
+        "name": "Door operation",
+        "desc": "All doors operate smoothly; no binding, sticking, or misalignment"
+      },
+      {
+        "name": "Door furniture",
+        "desc": "All door handles, locks, and hinges correctly installed and operational"
+      },
+      {
+        "name": "Skirting boards",
+        "desc": "Skirting boards correctly fixed; mitres tight; consistent height throughout. Skirting on top of tiles or engineered flooring may be completed after those trades but must be installed before painting commences."
+      },
+      {
+        "name": "Architraves",
+        "desc": "Architraves correctly fixed around all doors and windows; mitres tight"
+      },
+      {
+        "name": "Staircase installation",
+        "desc": "Staircase correctly installed per structural drawings; handrail at correct height"
+      },
+      {
+        "name": "Sill trimmers",
+        "desc": "Window sill trimmers correctly installed; level and consistent"
+      },
+      {
+        "name": "Final inspection",
+        "desc": "All carpentry fix-out complete; defects rectified; ready for painting"
+      }
+    ]
+  },
+  {
+    "label": "Fit Off – Electrical",
+    "order": 17,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved drawings available on site; installation to match approved design"
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clean and free from debris; previous trade materials removed before inspection"
+      },
+      {
+        "name": "Power points",
+        "desc": "All power points correctly installed at specified locations and heights; tested and operational."
+      },
+      {
+        "name": "Light switches",
+        "desc": "All light switches correctly installed at specified locations and heights; tested and operational."
+      },
+      {
+        "name": "Light fittings",
+        "desc": "All light fittings correctly installed per lighting plan; secure and plumb; tested and operational."
+      },
+      {
+        "name": "Downlight installation",
+        "desc": "All downlights correctly installed; fire-rated collars fitted where required; tested and operational."
+      },
+      {
+        "name": "Exhaust fans",
+        "desc": "All exhaust fans correctly installed; ducted to exterior; tested and operational."
+      },
+      {
+        "name": "Range hood",
+        "desc": "Range hood operational and tested; correctly ducted to exterior; no recirculation."
+      },
+      {
+        "name": "Smoke alarms",
+        "desc": "All smoke alarms correctly installed per NCC; interconnected; tested and operational."
+      },
+      {
+        "name": "Switchboard final",
+        "desc": "Switchboard correctly labelled; all circuits tested and operational; RCDs installed and tested."
+      },
+      {
+        "name": "Safety switches",
+        "desc": "Safety switches correctly installed and tested on all required circuits; operational."
+      },
+      {
+        "name": "Oven and cooktop",
+        "desc": "Oven and cooktop correctly connected; tested and operational."
+      },
+      {
+        "name": "Air conditioning",
+        "desc": "Air conditioning units correctly connected; tested and operational."
+      },
+      {
+        "name": "External lights",
+        "desc": "All external lights correctly installed; tested and operational."
+      },
+      {
+        "name": "TV and data points",
+        "desc": "All TV and data points correctly installed, terminated, and operational."
+      },
+      {
+        "name": "External screws",
+        "desc": "All external screws to be either galvanised or chemically treated; no untreated screws permitted in external locations."
+      }
+    ]
+  },
+  {
+    "label": "Fit Off – Air Conditioning",
+    "order": 18,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved drawings available on site; installation to match approved design"
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clean and free from debris; previous trade materials removed before inspection"
+      },
+      {
+        "name": "Supply grilles installed",
+        "desc": "All supply air grilles correctly installed at specified locations; level and secure"
+      },
+      {
+        "name": "Return air grilles installed",
+        "desc": "All return air grilles correctly installed; unobstructed; correct size per HVAC schedule"
+      },
+      {
+        "name": "Air conditioner unit commissioning",
+        "desc": "Air conditioning unit operational; tested and confirmed functioning correctly; no unusual noise or vibration."
+      },
+      {
+        "name": "Kitchen exhaust operation",
+        "desc": "Kitchen exhaust fan operational; correct extraction rate; filter installed"
+      },
+      {
+        "name": "Condensate drainage test",
+        "desc": "Condensate drainage tested; draining freely; no leaks or overflow"
+      },
+      {
+        "name": "Noise levels",
+        "desc": "System operating within acceptable noise levels; no unusual rattles or vibration"
+      },
+      {
+        "name": "Condensate drainage pipe location",
+        "desc": "Confirm condensate drainage pipe locations correct; drainage going to stormwater confirmed. If property connected to water tanks, drainage must go to a tundish — not directly to stormwater."
+      },
+      {
+        "name": "External screws",
+        "desc": "All external screws to be either galvanised or chemically treated; no untreated screws permitted in external locations."
+      },
+      {
+        "name": "Final inspection",
+        "desc": "Fit-off HVAC complete and commissioned; all items operational; ready for handover"
+      }
+    ]
+  },
+  {
+    "label": "Fit Off – Carpentry",
+    "order": 19,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved drawings on site and reviewed by supervisor before inspection commences."
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clean and free from debris; safe access for inspection throughout."
+      },
+      {
+        "name": "Door handles and locks",
+        "desc": "All door handles and locks correctly installed; operational; correct height and alignment throughout."
+      },
+      {
+        "name": "Door stops",
+        "desc": "Door stops correctly installed at all doors; correct type and position to protect walls and joinery."
+      },
+      {
+        "name": "Toilet roll holders",
+        "desc": "Toilet roll holders correctly installed at correct height and location in all bathrooms; secure and level."
+      },
+      {
+        "name": "Shower rails",
+        "desc": "Shower rails correctly installed; secure; correct height per specification; none missed."
+      },
+      {
+        "name": "Robe hooks",
+        "desc": "Robe hooks correctly installed at correct locations and heights; secure; none missed."
+      },
+      {
+        "name": "Hand towel rails",
+        "desc": "Hand towel rails correctly installed; secure; correct height and location in all bathrooms."
+      },
+      {
+        "name": "Skirting on engineered flooring",
+        "desc": "Skirting boards installed over engineered timber flooring at this stage; correctly fixed; mitres tight; no gaps at floor junction."
+      },
+      {
+        "name": "Final inspection",
+        "desc": "All carpentry fit-off items complete and inspected; all defects rectified before handover."
+      }
+    ]
+  },
+  {
+    "label": "Fit Off – Plumbing",
+    "order": 20,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved drawings available on site; installation to match approved design"
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clean and free from debris; previous trade materials removed before inspection"
+      },
+      {
+        "name": "Basin tapware",
+        "desc": "Basin tapware correctly installed; operational; no leaks"
+      },
+      {
+        "name": "Shower tapware",
+        "desc": "Shower tapware correctly installed; operational; correct temperature limit"
+      },
+      {
+        "name": "Shower head",
+        "desc": "Shower head correctly installed; operational; flow rate correct"
+      },
+      {
+        "name": "Bath installation",
+        "desc": "Bath correctly installed; level; correctly sealed; waste operational"
+      },
+      {
+        "name": "Bath tapware",
+        "desc": "Bath tapware correctly installed; operational; no leaks"
+      },
+      {
+        "name": "Toilet suite",
+        "desc": "Toilet suite correctly installed; level; correctly sealed to floor; operational"
+      },
+      {
+        "name": "Toilet flush",
+        "desc": "Toilet flush mechanism operational; correct flush volume; no leaks"
+      },
+      {
+        "name": "Kitchen tapware",
+        "desc": "Kitchen tapware correctly installed; operational; no leaks"
+      },
+      {
+        "name": "Laundry trough",
+        "desc": "Laundry trough correctly installed; waste operational; no leaks"
+      },
+      {
+        "name": "Hot water system",
+        "desc": "Hot water system operational; correct temperature; pressure relief valve correct"
+      },
+      {
+        "name": "Water pressure test",
+        "desc": "Water pressure tested throughout; correct pressure at all fixtures"
+      },
+      {
+        "name": "Sealing or Wet area fixtures",
+        "desc": "Before install, all fixtures should be sealed behind cover plates."
+      },
+      {
+        "name": "Toilet – Do Not Use sign",
+        "desc": "\"Do Not Use\" sign installed on all toilets immediately after installation; sign to remain until practical completion and client walkthrough."
+      },
+      {
+        "name": "External screws",
+        "desc": "All external screws to be either galvanised or chemically treated; no untreated screws permitted in external locations."
+      },
+      {
+        "name": "Plumbing certificate",
+        "desc": "Certificate of compliance obtained from licensed plumber"
+      }
+    ]
+  },
+  {
+    "label": "Caulking",
+    "order": 21,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved drawings available on site; installation to match approved design"
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clean and free from debris; previous trade materials removed before inspection"
+      },
+      {
+        "name": "Caulk type selection",
+        "desc": "Correct caulk type used for each location; sanitary or flexible mould-resistant sealant throughout. No paintable caulk to be used anywhere."
+      },
+      {
+        "name": "Surface preparation",
+        "desc": "All surfaces clean, dry, and free from dust, grease, or old sealant before application"
+      },
+      {
+        "name": "Bath and shower junctions",
+        "desc": "All bath and shower junctions correctly caulked with sanitary mould-resistant silicone; base of bath fully sealed all the way around; no gaps or voids."
+      },
+      {
+        "name": "Toilet junctions",
+        "desc": "Toilet base correctly sealed to floor; vertical joint on back-to-wall toilets sealed with sanitary silicone; no gaps."
+      },
+      {
+        "name": "Basin junctions",
+        "desc": "All basin-to-wall and basin-to-vanity junctions correctly caulked; neat and consistent"
+      },
+      {
+        "name": "Kitchen bench junctions",
+        "desc": "Kitchen benchtop-to-wall and sink junctions correctly caulked; continuous bead"
+      },
+      {
+        "name": "Window and door reveals",
+        "desc": "All window and door reveal junctions correctly caulked; no paintable sealant to be used."
+      },
+      {
+        "name": "Skirting boards",
+        "desc": "Skirting board junctions caulked where required; smooth and consistent finish."
+      },
+      {
+        "name": "External junctions",
+        "desc": "All external wall junctions, penetrations, and flashings correctly caulked or sealed"
+      },
+      {
+        "name": "Expansion joints",
+        "desc": "All expansion and movement joints correctly caulked with flexible sealant; correct width"
+      },
+      {
+        "name": "Tile expansion joints",
+        "desc": "All tile expansion joints correctly caulked to match grout colour; no hard grout in expansion joints."
+      },
+      {
+        "name": "Penetration sealing",
+        "desc": "All service penetrations through walls and floors correctly caulked and sealed"
+      },
+      {
+        "name": "Finish quality",
+        "desc": "All caulk beads neat, consistent, and tooled; no smearing on adjacent surfaces"
+      },
+      {
+        "name": "Touch-up complete",
+        "desc": "All missed or defective caulking identified and rectified before final inspection"
+      },
+      {
+        "name": "Final inspection",
+        "desc": "Caulking complete and inspected; all junctions sealed; ready for final finishes"
+      }
+    ]
+  },
+  {
+    "label": "Flooring",
+    "order": 22,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved drawings on site and reviewed by supervisor before inspection commences."
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clean and free from debris; subfloor dry and ready for flooring installation."
+      },
+      {
+        "name": "Carpet – type and colour",
+        "desc": "Carpet correct type, colour, and grade per specification and client selection; confirmed before installation."
+      },
+      {
+        "name": "Carpet – underlay",
+        "desc": "Correct underlay type and thickness installed; correctly fixed to subfloor; no gaps or overlaps."
+      },
+      {
+        "name": "Carpet – substrate preparation",
+        "desc": "Subfloor correctly prepared; level, clean, and dry; all nail heads punched and protrusions removed."
+      },
+      {
+        "name": "Carpet – fixing and stretching",
+        "desc": "Carpet correctly stretched and fixed to gripper rods; no bubbles, wrinkles, or loose areas."
+      },
+      {
+        "name": "Carpet – joins",
+        "desc": "All carpet joins correctly positioned; not in high-traffic areas; invisible from standing height."
+      },
+      {
+        "name": "Carpet – transitions",
+        "desc": "All carpet-to-hard-floor transitions correctly fitted with appropriate threshold strip; secure and flush."
+      },
+      {
+        "name": "Carpet – condition",
+        "desc": "Carpet free from stains, pulls, or damage; correct to specification; protected during remaining works."
+      },
+      {
+        "name": "Vinyl – type and colour",
+        "desc": "Vinyl correct type, colour, and grade per specification and client selection; confirmed before installation."
+      },
+      {
+        "name": "Vinyl – substrate preparation",
+        "desc": "Subfloor correctly prepared; level within 3mm over 1.8m; clean, dry, and free from contamination."
+      },
+      {
+        "name": "Vinyl – adhesive and fixing",
+        "desc": "Correct adhesive type used; coverage correct per manufacturer's specification; no lifting or bubbling."
+      },
+      {
+        "name": "Vinyl – layout and direction",
+        "desc": "Vinyl laid in correct direction per drawings; layout balanced and consistent throughout."
+      },
+      {
+        "name": "Vinyl – joins and seams",
+        "desc": "All joins and seams correctly positioned; heat welded where required; no gaps or lifting at seams."
+      },
+      {
+        "name": "Vinyl – expansion gaps",
+        "desc": "Correct expansion gaps maintained at all walls and fixed objects per manufacturer's specification."
+      },
+      {
+        "name": "Vinyl – transitions",
+        "desc": "All transitions and thresholds correctly installed at room junctions; secure and flush."
+      },
+      {
+        "name": "Vinyl – condition",
+        "desc": "Vinyl free from cuts, bubbles, or damage; correct to specification; protected during remaining works."
+      },
+      {
+        "name": "Engineered – type and colour",
+        "desc": "Engineered timber product correct type, colour, and grade per specification and client selection; confirmed before installation."
+      },
+      {
+        "name": "Engineered – substrate preparation",
+        "desc": "Subfloor correctly prepared; level within tolerance; clean and dry per manufacturer's specification."
+      },
+      {
+        "name": "Engineered – moisture test",
+        "desc": "Request moisture test results from flooring installer prior to installation; results to be recorded and filed."
+      },
+      {
+        "name": "Engineered – underlay",
+        "desc": "Correct underlay type installed; correctly lapped and fixed per manufacturer's specification."
+      },
+      {
+        "name": "Engineered – expansion gaps",
+        "desc": "Correct expansion gaps maintained at all walls, fixed objects, and wet-area junctions; gaps to be covered by skirting."
+      },
+      {
+        "name": "Engineered – layout and direction",
+        "desc": "Flooring laid in correct direction per drawings; layout balanced and consistent throughout."
+      },
+      {
+        "name": "Engineered – fixing method",
+        "desc": "Flooring fixed using correct method for product; adhesive, nail, or float as specified by manufacturer."
+      },
+      {
+        "name": "Engineered – waterfall ends",
+        "desc": "Any waterfall benchtop ends confirmed raised 17mm from floor level to allow flooring to flow beneath for expansion."
+      },
+      {
+        "name": "Engineered – transitions and thresholds",
+        "desc": "All transition strips and thresholds correctly installed at room junctions; correct profile; secure and flush."
+      },
+      {
+        "name": "Garage transition",
+        "desc": "Transition from any flooring product to garage to be no more than 5mm step; check all garage entry points. And or 1:80 threshold"
+      },
+      {
+        "name": "Engineered – stair nosings",
+        "desc": "Stair nosings correctly installed; secure; correct profile per specification; expansion gap maintained."
+      },
+      {
+        "name": "Engineered – squeaks and movement",
+        "desc": "No squeaks or movement in installed flooring; subfloor preparation adequate; all areas checked."
+      },
+      {
+        "name": "Engineered – condition",
+        "desc": "All flooring free from chips, scratches, gaps, or damage; correct to specification."
+      },
+      {
+        "name": "Engineered – tread protection",
+        "desc": "MDF or similar protective covers installed over all engineered timber stair treads; no treads left exposed."
+      },
+      {
+        "name": "Final inspection",
+        "desc": "All flooring complete and inspected; all defects rectified; skirting boards confirmed installed or scheduled before painting."
+      }
+    ]
+  },
+  {
+    "label": "Showers, Mirrors & Robes",
+    "order": 23,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved drawings available on site; installation to match approved design"
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clean and free from debris; previous trade materials removed before inspection"
+      },
+      {
+        "name": "Shower screen type",
+        "desc": "Shower screen correct type, size, and finish per specification and client selection"
+      },
+      {
+        "name": "Shower screen fixing",
+        "desc": "Shower screen correctly fixed onto hob; sealed to tile angle to ensure waterproofing is complete; plumb; no gaps at wall or hob junctions."
+      },
+      {
+        "name": "Shower screen operation",
+        "desc": "Shower screen door operates correctly; no binding or misalignment; seals functional"
+      },
+      {
+        "name": "Mirror type and size",
+        "desc": "All mirrors correct type, size, and finish per specification and client selection"
+      },
+      {
+        "name": "Mirror fixing",
+        "desc": "All mirrors correctly fixed to wall; level; secure; no movement"
+      },
+      {
+        "name": "Mirror sealing",
+        "desc": "All mirror edges correctly sealed or framed to prevent moisture ingress"
+      },
+      {
+        "name": "Robe type and layout",
+        "desc": "Built-in robe fitout correct type and layout per specification and client selection"
+      },
+      {
+        "name": "Robe fixing",
+        "desc": "All robe components correctly fixed; level, plumb, and square; no movement"
+      },
+      {
+        "name": "Robe shelving",
+        "desc": "All robe shelving correctly installed at correct heights; correctly supported"
+      },
+      {
+        "name": "Hanging rails",
+        "desc": "Hanging rails correctly installed at correct heights; correctly supported; no deflection"
+      },
+      {
+        "name": "Robe doors",
+        "desc": "Robe doors correctly hung; operate smoothly; no binding; correct clearances. Floor tracks correctly fixed down; secure and flush with no movement. Check for rubber stops installed."
+      },
+      {
+        "name": "Final inspection",
+        "desc": "Showers, mirrors, and robes complete and inspected; all defects rectified"
+      }
+    ]
+  },
+  {
+    "label": "Cleaning",
+    "order": 24,
+    "items": [
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clean and free from debris; previous trade materials removed before inspection"
+      },
+      {
+        "name": "Window cleaning – internal",
+        "desc": "All internal window glass cleaned; no smears, paint spots, or stickers remaining"
+      },
+      {
+        "name": "Window cleaning – external",
+        "desc": "All external window glass cleaned; no smears, mortar, or adhesive residue"
+      },
+      {
+        "name": "Floor cleaning",
+        "desc": "All hard floor surfaces cleaned; adhesive residue, grout haze, and paint removed"
+      },
+      {
+        "name": "Carpet cleaning",
+        "desc": "All carpet areas vacuumed; any stains or soiling treated and removed"
+      },
+      {
+        "name": "Joinery cleaning",
+        "desc": "All joinery including cabinets, benchtops, and drawers cleaned inside and out; no dust, adhesive, or residue remaining."
+      },
+      {
+        "name": "Bathroom cleaning",
+        "desc": "All bathroom fixtures, tiles, screens, and mirrors cleaned and polished"
+      },
+      {
+        "name": "Paint overspray removal",
+        "desc": "All paint overspray removed from tiles, glass, fittings, and floor surfaces"
+      },
+      {
+        "name": "Tile and grout cleaning",
+        "desc": "All tiled surfaces cleaned; grout haze fully removed; surfaces polished"
+      },
+      {
+        "name": "Appliance cleaning",
+        "desc": "All appliances including oven, cooktop, and dishwasher cleaned inside and out"
+      },
+      {
+        "name": "Window and door tracks",
+        "desc": "All aluminium window and door tracks cleaned and free of debris, dust, and swarf; tracks operate smoothly."
+      },
+      {
+        "name": "Internal glass",
+        "desc": "All internal glass surfaces cleaned and polished; no smears, paint spots, or residue."
+      },
+      {
+        "name": "Glass balustrading",
+        "desc": "All internal and external glass balustrading cleaned and polished both faces; no fingerprints, smears, or construction residue."
+      },
+      {
+        "name": "Skirting boards",
+        "desc": "All skirting boards wiped clean and free of dust, paint overspray, and residue throughout."
+      },
+      {
+        "name": "Joinery interiors",
+        "desc": "All joinery drawers and cabinet interiors cleaned; no dust, offcuts, or debris remaining inside any unit."
+      },
+      {
+        "name": "Final detail clean",
+        "desc": "Final detail clean completed; all surfaces inspection-ready"
+      },
+      {
+        "name": "Cleaning complete",
+        "desc": "Cleaning complete and inspected; site ready for client walkthrough and handover"
+      }
+    ]
+  },
+  {
+    "label": "Practical Completion",
+    "order": 25,
+    "items": [
+      {
+        "name": "Approved drawings on site",
+        "desc": "Current approved drawings available on site; installation to match approved design"
+      },
+      {
+        "name": "Site cleanliness",
+        "desc": "Work area clean and free from debris; previous trade materials removed before inspection"
+      },
+      {
+        "name": "Services completion",
+        "desc": "All electrical, plumbing, and HVAC services complete and certificates obtained"
+      },
+      {
+        "name": "Internal finishes",
+        "desc": "All internal finishes complete including painting, flooring, tiling, and cabinetry"
+      },
+      {
+        "name": "External finishes",
+        "desc": "All external finishes complete including painting, cladding, and roofing"
+      },
+      {
+        "name": "Landscaping complete",
+        "desc": "All landscaping and external works complete per contract documents"
+      },
+      {
+        "name": "Defect list actioned",
+        "desc": "All items from internal defect inspection completed and signed off"
+      },
+      {
+        "name": "Certificate of occupancy",
+        "desc": "Certificate of occupancy obtained from building certifier"
+      },
+      {
+        "name": "Subcontractor warranties",
+        "desc": "All subcontractor warranties and product warranties collected and filed"
+      },
+      {
+        "name": "Operating manuals",
+        "desc": "All appliance and system operating manuals provided to client"
+      },
+      {
+        "name": "Client walkthrough",
+        "desc": "Formal client handover walkthrough completed; all items demonstrated"
+      },
+      {
+        "name": "Termite stickers",
+        "desc": "Termite system stickers correctly installed at all required locations; none missed."
+      },
+      {
+        "name": "Garage door remote",
+        "desc": "Garage door remote programmed and operational; handed to office for inclusion in handover pack."
+      },
+      {
+        "name": "Warranty documents",
+        "desc": "All warranty documents collected from trades and suppliers; handed to office for handover pack."
+      },
+      {
+        "name": "Keys collected",
+        "desc": "All keys collected from site; handed to office to prepare handover pack for client."
+      },
+      {
+        "name": "Letterbox and clothesline",
+        "desc": "Letterbox and clothesline confirmed installed; correct locations per drawings."
+      },
+      {
+        "name": "External pressure cleaning",
+        "desc": "External pressure cleaning of all hard surfaces, driveways, and paths completed."
+      },
+      {
+        "name": "HSTP system",
+        "desc": "HSTP system commissioned and operational; plumbing certificate received and filed."
+      },
+      {
+        "name": "Fireplace commissioned",
+        "desc": "Fireplace commissioned and operational; tested and confirmed functioning correctly."
+      },
+      {
+        "name": "Fly screens",
+        "desc": "All fly screens correctly installed on all applicable windows and doors; none missed."
+      },
+      {
+        "name": "Window coverings",
+        "desc": "All window coverings correctly installed per client selection; operational and correct to specification."
+      },
+      {
+        "name": "Handover documentation",
+        "desc": "All handover documentation signed by client and filed"
+      }
+    ]
+  }
+];
+  for (const cl of checklists) {
+    await db.collection('checklists').add(cl);
+  }
+  console.log('Checklists seeded:', checklists.length);
 }
+
 
 async function loadChecklists() {
   const snap = await db.collection('checklists').get();
