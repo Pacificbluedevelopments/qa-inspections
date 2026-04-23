@@ -488,36 +488,46 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
       <button class="bar-btn" onclick="showScreen('screen-pc-check')">‹ Back</button>
     </div>
   </div>
-  <div class="body" id="sig-body" style="touch-action:pan-y;">
-    <div style="font-size:14px;font-weight:600;color:#333F48;margin-bottom:4px;">Capture signatures</div>
-    <div style="font-size:12px;color:#9A9690;margin-bottom:16px;">Please read the declaration below before signing.</div>
+  <div class="body">
     <div style="background:#F0EDE8;border-radius:10px;padding:14px 16px;margin-bottom:20px;border:1px solid #DDD9D2;">
       <div style="font-size:10px;font-weight:700;color:#B7B09C;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Declaration</div>
       <div id="sig-declaration-text" style="font-size:12px;color:#5C5A57;line-height:1.7;"></div>
     </div>
 
-    <div class="sig-pad-wrap" id="sig-pad-wrap-owner">
+    <div class="sig-pad-wrap">
       <span class="sig-pad-label">Owner signature — <span id="sig-owner-name"></span></span>
-      <svg id="sig-svg-owner" style="display:block;touch-action:none;cursor:crosshair;background:#fff;border-radius:8px;border:1.5px solid #E4E0DA;width:100%;height:160px;"></svg>
-      <img id="sig-preview-owner" class="sig-preview">
-      <div class="sig-actions">
-        <button class="sig-clear" onclick="clearSig('owner')">Clear</button>
-        <button class="sig-done" onclick="captureSig('owner')">Capture ✓</button>
-      </div>
+      <div id="sig-owner-status" style="font-size:12px;color:#9A9690;margin-bottom:6px;">Not yet signed</div>
+      <button class="primary-btn" onclick="openSigCapture('owner')" id="sig-owner-btn">Tap to sign</button>
+      <img id="sig-preview-owner" class="sig-preview" style="display:none;width:100%;height:80px;object-fit:contain;border:1.5px solid #4A7C4A;border-radius:8px;background:#E8F0E8;">
+      <button class="sig-clear" onclick="clearSig('owner')" id="sig-owner-clear" style="display:none;margin-top:6px;">Re-sign</button>
     </div>
 
-    <div class="sig-pad-wrap" id="sig-pad-wrap-contractor">
+    <div class="sig-pad-wrap">
       <span class="sig-pad-label">Contractor signature — Pacific Blue Developments Pty Ltd</span>
-      <svg id="sig-svg-contractor" style="display:block;touch-action:none;cursor:crosshair;background:#fff;border-radius:8px;border:1.5px solid #E4E0DA;width:100%;height:160px;"></svg>
-      <img id="sig-preview-contractor" class="sig-preview">
-      <div class="sig-actions">
-        <button class="sig-clear" onclick="clearSig('contractor')">Clear</button>
-        <button class="sig-done" onclick="captureSig('contractor')">Capture ✓</button>
-      </div>
+      <div id="sig-contractor-status" style="font-size:12px;color:#9A9690;margin-bottom:6px;">Not yet signed</div>
+      <button class="primary-btn" onclick="openSigCapture('contractor')" id="sig-contractor-btn">Tap to sign</button>
+      <img id="sig-preview-contractor" class="sig-preview" style="display:none;width:100%;height:80px;object-fit:contain;border:1.5px solid #4A7C4A;border-radius:8px;background:#E8F0E8;">
+      <button class="sig-clear" onclick="clearSig('contractor')" id="sig-contractor-clear" style="display:none;margin-top:6px;">Re-sign</button>
     </div>
 
     <button class="primary-btn" onclick="completePCCertificate()">Complete &amp; send report</button>
-    <button class="ghost-btn" onclick="document.body.style.overflow='';showScreen('screen-pc-check')">‹ Back to items</button>
+    <button class="ghost-btn" onclick="showScreen('screen-pc-check')">‹ Back to items</button>
+  </div>
+</div>
+
+<!-- SIGNATURE CAPTURE OVERLAY -->
+<div id="sig-overlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:500;flex-direction:column;">
+  <div style="background:#333F48;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
+    <div style="color:#fff;font-size:15px;font-weight:600;" id="sig-overlay-title">Sign here</div>
+    <button onclick="closeSigCapture()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;cursor:pointer;">Cancel</button>
+  </div>
+  <div style="padding:16px;flex:1;display:flex;flex-direction:column;">
+    <div style="font-size:12px;color:#9A9690;margin-bottom:12px;">Draw your signature in the box below</div>
+    <canvas id="sig-canvas-main" style="flex:1;width:100%;background:#F7F6F4;border-radius:12px;border:2px solid #E4E0DA;display:block;touch-action:none;"></canvas>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button onclick="clearSigCanvas()" style="flex:1;padding:14px;background:#F7F6F4;border:1.5px solid #E4E0DA;border-radius:10px;font-size:14px;cursor:pointer;font-family:Poppins,sans-serif;">Clear</button>
+      <button onclick="confirmSig()" style="flex:2;padding:14px;background:#333F48;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;">Confirm signature ✓</button>
+    </div>
   </div>
 </div>
 
@@ -3594,154 +3604,147 @@ function goToPCSignatures() {
     declEl.textContent = "The Owner (" + pcData.owner + ") has inspected the site on " + pcData.date + " and acknowledges that the Contractor (Pacific Blue Developments Pty Ltd) has duly performed the contract to the Owner's satisfaction, and agrees that the works have reached Practical Completion and are in good order except for the items listed in this certificate.";
   }
   showScreen('screen-pc-signatures');
-  setTimeout(() => {
-    initSigPad('owner');
-    initSigPad('contractor');
-  }, 400);
-  // Prevent body scroll interfering with signature drawing
-  document.body.style.overflow = 'hidden';
+  // Reset signature state for new certificate
+  clearSig('owner');
+  clearSig('contractor');
 }
 
-function initSigPad(which) {
-  const wrap = document.getElementById('sig-pad-wrap-' + which);
-  const svg = document.getElementById('sig-svg-' + which);
-  if (!wrap || !svg) return;
+function openSigCapture(which) {
+  sigCurrentWhich = which;
+  const overlay = document.getElementById('sig-overlay');
+  const title = document.getElementById('sig-overlay-title');
+  const canvas = document.getElementById('sig-canvas-main');
+  title.textContent = which === 'owner' ? 'Owner Signature' : 'Contractor Signature';
+  overlay.style.display = 'flex';
+  overlay.style.flexDirection = 'column';
 
-  // Set SVG size to match wrapper
-  const rect = wrap.getBoundingClientRect();
-  const W = rect.width || wrap.offsetWidth || 300;
-  const H = 160;
-  svg.setAttribute('width', W);
-  svg.setAttribute('height', H);
-  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-  svg.style.width = W + 'px';
-  svg.style.height = H + 'px';
+  // Size canvas to fill available space
+  setTimeout(function() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#1A1F24';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    sigMainCtx = ctx;
+    sigMainDrawing = false;
+    sigMainHasContent = false;
+    setupMainCanvas(canvas);
+  }, 50);
+}
 
-  let drawing = false;
-  let currentPath = null;
-  let points = [];
+let sigCurrentWhich = null;
+let sigMainCtx = null;
+let sigMainDrawing = false;
+let sigMainHasContent = false;
+let sigMainLastX = 0;
+let sigMainLastY = 0;
+
+function setupMainCanvas(canvas) {
+  // Remove old listeners
+  const fresh = canvas.cloneNode(true);
+  canvas.parentNode.replaceChild(fresh, canvas);
+  const c = document.getElementById('sig-canvas-main');
+  c.width = c.offsetWidth;
+  c.height = c.offsetHeight;
+  sigMainCtx = c.getContext('2d');
+  sigMainCtx.strokeStyle = '#1A1F24';
+  sigMainCtx.lineWidth = 2.5;
+  sigMainCtx.lineCap = 'round';
+  sigMainCtx.lineJoin = 'round';
 
   function getXY(e) {
-    const r = svg.getBoundingClientRect();
-    const src = e.touches ? e.touches[0] : e;
-    return {
-      x: Math.round(src.clientX - r.left),
-      y: Math.round(src.clientY - r.top)
-    };
+    const r = c.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX - r.left, y: t.clientY - r.top };
   }
 
-  function startDraw(e) {
+  c.addEventListener('pointerdown', function(e) {
     e.preventDefault();
-    e.stopPropagation();
-    drawing = true;
-    points = [];
+    sigMainDrawing = true;
+    sigMainHasContent = true;
     const p = getXY(e);
-    points.push(p);
-    currentPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    currentPath.setAttribute('stroke', '#1A1F24');
-    currentPath.setAttribute('stroke-width', '2.5');
-    currentPath.setAttribute('stroke-linecap', 'round');
-    currentPath.setAttribute('stroke-linejoin', 'round');
-    currentPath.setAttribute('fill', 'none');
-    currentPath.setAttribute('d', 'M' + p.x + ',' + p.y);
-    svg.appendChild(currentPath);
-    sigDrawing[which] = true;
-  }
+    sigMainLastX = p.x; sigMainLastY = p.y;
+    sigMainCtx.beginPath();
+    sigMainCtx.moveTo(p.x, p.y);
+    c.setPointerCapture(e.pointerId);
+  }, {passive: false});
 
-  function moveDraw(e) {
+  c.addEventListener('pointermove', function(e) {
     e.preventDefault();
-    e.stopPropagation();
-    if (!drawing || !currentPath) return;
+    if (!sigMainDrawing) return;
     const p = getXY(e);
-    points.push(p);
-    // Smooth curve through points
-    let d = 'M' + points[0].x + ',' + points[0].y;
-    for (let i = 1; i < points.length; i++) {
-      const prev = points[i-1];
-      const curr = points[i];
-      const mx = (prev.x + curr.x) / 2;
-      const my = (prev.y + curr.y) / 2;
-      d += ' Q' + prev.x + ',' + prev.y + ' ' + mx + ',' + my;
-    }
-    currentPath.setAttribute('d', d);
-  }
+    sigMainCtx.lineTo(p.x, p.y);
+    sigMainCtx.stroke();
+    sigMainCtx.beginPath();
+    sigMainCtx.moveTo(p.x, p.y);
+    sigMainLastX = p.x; sigMainLastY = p.y;
+  }, {passive: false});
 
-  function endDraw(e) {
+  c.addEventListener('pointerup', function(e) {
     e.preventDefault();
-    drawing = false;
-    currentPath = null;
-  }
+    sigMainDrawing = false;
+  }, {passive: false});
 
-  // Remove old listeners by replacing SVG
-  const newSvg = svg.cloneNode(false);
-  svg.parentNode.replaceChild(newSvg, svg);
-
-  // Re-assign reference
-  const s = document.getElementById('sig-svg-' + which);
-  s.setAttribute('width', W);
-  s.setAttribute('height', H);
-  s.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-  s.style.cssText = 'width:' + W + 'px;height:' + H + 'px;display:block;touch-action:none;cursor:crosshair;background:#fff;border-radius:8px;border:1.5px solid #E4E0DA;';
-
-  s.addEventListener('mousedown', startDraw, {passive: false});
-  s.addEventListener('touchstart', startDraw, {passive: false});
-  s.addEventListener('mousemove', moveDraw, {passive: false});
-  s.addEventListener('touchmove', moveDraw, {passive: false});
-  s.addEventListener('mouseup', endDraw, {passive: false});
-  s.addEventListener('touchend', endDraw, {passive: false});
-  s.addEventListener('mouseleave', endDraw, {passive: false});
-
-  sigCtx[which] = s; // store reference for captureSig
+  c.addEventListener('pointercancel', function(e) {
+    sigMainDrawing = false;
+  });
 }
 
+function clearSigCanvas() {
+  const c = document.getElementById('sig-canvas-main');
+  if (sigMainCtx) sigMainCtx.clearRect(0, 0, c.width, c.height);
+  sigMainHasContent = false;
+}
+
+function closeSigCapture() {
+  document.getElementById('sig-overlay').style.display = 'none';
+}
+
+function confirmSig() {
+  if (!sigMainHasContent) { showToast('Please sign before confirming'); return; }
+  const c = document.getElementById('sig-canvas-main');
+  const dataUrl = c.toDataURL('image/png');
+  pcSigs[sigCurrentWhich] = dataUrl;
+
+  const preview = document.getElementById('sig-preview-' + sigCurrentWhich);
+  preview.src = dataUrl;
+  preview.style.display = 'block';
+
+  const btn = document.getElementById('sig-' + sigCurrentWhich + '-btn');
+  if (btn) { btn.textContent = '✓ Signed — tap to re-sign'; btn.style.background = '#4A7C4A'; }
+
+  const clearBtn = document.getElementById('sig-' + sigCurrentWhich + '-clear');
+  if (clearBtn) clearBtn.style.display = 'block';
+
+  const status = document.getElementById('sig-' + sigCurrentWhich + '-status');
+  if (status) { status.textContent = 'Signed ✓'; status.style.color = '#1E4D1E'; }
+
+  closeSigCapture();
+  showToast('Signature captured ✓');
+}
 
 function clearSig(which) {
-  const svg = document.getElementById('sig-svg-' + which);
-  if (svg) {
-    while (svg.firstChild) svg.removeChild(svg.firstChild);
-    svg.style.display = 'block';
-  }
   pcSigs[which] = null;
   const preview = document.getElementById('sig-preview-' + which);
   if (preview) preview.style.display = 'none';
+  const btn = document.getElementById('sig-' + which + '-btn');
+  if (btn) { btn.textContent = 'Tap to sign'; btn.style.background = '#333F48'; }
+  const clearBtn = document.getElementById('sig-' + which + '-clear');
+  if (clearBtn) clearBtn.style.display = 'none';
+  const status = document.getElementById('sig-' + which + '-status');
+  if (status) { status.textContent = 'Not yet signed'; status.style.color = '#9A9690'; }
 }
 
-function captureSig(which) {
-  const svg = document.getElementById('sig-svg-' + which);
-  if (!svg) { showToast('Signature pad not ready'); return; }
-  // Check if anything was drawn
-  if (svg.children.length === 0) { showToast('Please sign before capturing'); return; }
-  // Convert SVG to PNG via canvas
-  const W = parseInt(svg.getAttribute('width')) || 300;
-  const H = parseInt(svg.getAttribute('height')) || 160;
-  const canvas = document.createElement('canvas');
-  canvas.width = W * 2;
-  canvas.height = H * 2;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(2, 2);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, W, H);
-  const svgData = new XMLSerializer().serializeToString(svg);
-  const img = new Image();
-  const blob = new Blob([svgData], {type: 'image/svg+xml'});
-  const url = URL.createObjectURL(blob);
-  img.onload = function() {
-    ctx.drawImage(img, 0, 0, W, H);
-    URL.revokeObjectURL(url);
-    pcSigs[which] = canvas.toDataURL('image/png');
-    const preview = document.getElementById('sig-preview-' + which);
-    if (preview) {
-      preview.src = pcSigs[which];
-      preview.style.display = 'block';
-    }
-    svg.style.display = 'none';
-    showToast('Signature captured ✓');
-  };
-  img.src = url;
+function initSigPad(which) {
+  // No longer needed - pads open on button tap
+  clearSig(which);
 }
+
 
 async function completePCCertificate() {
-  document.body.style.overflow = '';
   if (!pcSigs.owner) { showToast('Please capture the owner signature'); return; }
   if (!pcSigs.contractor) { showToast('Please capture the contractor signature'); return; }
 
@@ -4420,6 +4423,10 @@ window.handlePCPhoto=handlePCPhoto;
 window.removePCPhoto=removePCPhoto;
 window.goToPCSignatures=goToPCSignatures;
 window.clearSig=clearSig;
+window.openSigCapture=openSigCapture;
+window.closeSigCapture=closeSigCapture;
+window.clearSigCanvas=clearSigCanvas;
+window.confirmSig=confirmSig;
 window.captureSig=captureSig;
 window.completePCCertificate=completePCCertificate;
 window.addPCLine=addPCLine;
