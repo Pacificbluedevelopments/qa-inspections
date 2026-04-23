@@ -109,8 +109,7 @@ async function loadCert() {
             item.lines.filter(Boolean).map(function(l){ return '<li>' + l + '</li>'; }).join('') +
             '</ul>';
         } else if (item.desc) {
-          linesHtml = '<div style="font-size:13px;color:#1A1F24;line-height:1.65;">' + item.desc.split('
-').join('<br>') + '</div>';
+          linesHtml = '<div style="font-size:13px;color:#1A1F24;line-height:1.65;">' + item.desc.split('\n').join('<br>') + '</div>';
         }
         return '<div class="item">' +
           (item.trade ? '<div class="item-trade">' + item.trade + '</div>' : '') +
