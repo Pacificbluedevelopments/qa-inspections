@@ -1068,27 +1068,30 @@ async function goSummary() {
   showLoading('Saving inspection…');
   const {p,f,na,fi,out} = getCounts();
 
-  // Upload photos to Firebase Storage
+  // Upload photos to Firebase Storage in parallel for speed
   const photoURLs = {};
+  const uploadTasks = [];
   for (const [num, fileList] of Object.entries(photoFiles)) {
     if (!fileList) continue;
-    photoURLs[num] = [];
-    for (const item of fileList) {
-      if (!item) continue;
-      try {
-        const path = `inspections/${currentJob.id}/${Date.now()}_${num}.jpg`;
-        const ref = storage.ref(path);
-        await ref.putString(item.dataUrl, 'data_url');
-        const url = await ref.getDownloadURL();
-        photoURLs[num].push(url);
-      } catch(e) {
-        // Fall back to base64 if upload fails
-        photoURLs[num].push(item.dataUrl);
-      }
-    }
+    photoURLs[num] = new Array(fileList.length).fill(null);
+    fileList.forEach((item, i) => {
+      if (!item) return;
+      uploadTasks.push((async () => {
+        try {
+          const path = `inspections/${currentJob.id}/${Date.now()}_${num}_${i}.jpg`;
+          const ref = storage.ref(path);
+          await ref.putString(item.dataUrl, 'data_url');
+          photoURLs[num][i] = await ref.getDownloadURL();
+        } catch(e) {
+          photoURLs[num][i] = item.dataUrl;
+        }
+      })());
+    });
   }
+  await Promise.all(uploadTasks);
+  Object.keys(photoURLs).forEach(k => { photoURLs[k] = photoURLs[k].filter(Boolean); });
 
-  // Update ad hoc item names/descs before saving
+    // Update ad hoc item names/descs before saving
   activeItems = activeItems.map(([num, name, desc]) => {
     if (num.startsWith('AH')) {
       return [num, adHocNames[num] || name, adHocDescs[num] || desc];
@@ -1222,7 +1225,11 @@ function buildReportBody() {
       ${nt?`<div style="font-size:12px;color:#333;background:#F7F6F4;padding:8px 10px;border-radius:6px;border-left:3px solid #B7B09C;${ph.length?'margin-bottom:8px':''}">${nt}</div>`:''}
       ${ph.length?`<div style="background:#F7F6F4;border-radius:6px;padding:8px 12px;font-size:12px;color:#9A9690;margin-top:4px;">📷 ${ph.length} photo${ph.length>1?'s':''} — visible in the report link</div>`:''}">${rq}</div>
       ${nt?`<div style="font-size:12px;color:#333;background:#F7F6F4;padding:8px 10px;border-radius:6px;border-left:3px solid #B7B09C;${ph.length?'margin-bottom:8px':''}">${nt}</div>`:''}
-      ${ph.length?'<div style="display:flex;flex-wrap:wrap;gap:8px;">'+ph.map(s=>`<img src="${s}" loading="lazy" style="width:100%;max-width:100%;height:auto;border-radius:6px;border:1px solid #ddd;display:block;">`).join('')+'</div>':''}
+      ${ph.length?`<div style="font-size:12px;color:#9A9690;background:#F7F6F4;padding:6px 10px;border-radius:6px;margin-top:4px;">📷 ${ph.length} photo${ph.length>1?'s':''} — visible in the report link</div>`:''}">${rq}</div>
+      ${nt?`<div style="font-size:12px;color:#333;background:#F7F6F4;padding:8px 10px;border-radius:6px;border-left:3px solid #B7B09C;${ph.length?'margin-bottom:8px':''}">${nt}</div>`:''}
+      ${ph.length?`<div style="background:#F7F6F4;border-radius:6px;padding:8px 12px;font-size:12px;color:#9A9690;margin-top:4px;">📷 ${ph.length} photo${ph.length>1?'s':''} — visible in the report link</div>`:''}">${rq}</div>
+      ${nt?`<div style="font-size:12px;color:#333;background:#F7F6F4;padding:8px 10px;border-radius:6px;border-left:3px solid #B7B09C;${ph.length?'margin-bottom:8px':''}">${nt}</div>`:''}
+      ${ph.length?`<div style="font-size:12px;color:#9A9690;background:#F7F6F4;padding:6px 10px;border-radius:6px;margin-top:4px;">📷 ${ph.length} photo${ph.length>1?'s':''} — visible in the report link</div>`:''}
     </div>`;
   });
 
@@ -1324,6 +1331,11 @@ function openPCCertificate(cert) {
 }
 
 function openPCSetup() {
+  // Reset all PC state for fresh certificate
+  pcItems = { part1: [], part2: [] };
+  pcPhotos = {};
+  pcSigs = { owner: null, contractor: null };
+  pcItemCounter = 0;
   // Pre-fill from job
   document.getElementById('pc-owner').value = currentJob.client || '';
   document.getElementById('pc-supervisor').value = '';
@@ -1579,6 +1591,9 @@ function goToPCSignatures() {
   }
   showScreen('screen-pc-signatures');
   setTimeout(() => {
+    // Clear any previous signatures
+    clearSig('owner');
+    clearSig('contractor');
     initSigPad('owner');
     initSigPad('contractor');
   }, 100);
@@ -1701,6 +1716,7 @@ async function completePCCertificate() {
     // Navigate to job detail first
     showScreen('screen-job-detail');
     loadInspections();
+    loadPCCertificates();
     // Then open email after short delay
     setTimeout(async function() {
       await sendPCEmail(ref.id, certData);
