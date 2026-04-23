@@ -488,7 +488,7 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
       <button class="bar-btn" onclick="showScreen('screen-pc-check')">‹ Back</button>
     </div>
   </div>
-  <div class="body">
+  <div class="body" id="sig-body" style="touch-action:pan-y;">
     <div style="font-size:14px;font-weight:600;color:#333F48;margin-bottom:4px;">Capture signatures</div>
     <div style="font-size:12px;color:#9A9690;margin-bottom:16px;">Please read the declaration below before signing.</div>
     <div style="background:#F0EDE8;border-radius:10px;padding:14px 16px;margin-bottom:20px;border:1px solid #DDD9D2;">
@@ -517,7 +517,7 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
     </div>
 
     <button class="primary-btn" onclick="completePCCertificate()">Complete &amp; send report</button>
-    <button class="ghost-btn" onclick="showScreen('screen-pc-check')">‹ Back to items</button>
+    <button class="ghost-btn" onclick="document.body.style.overflow='';showScreen('screen-pc-check')">‹ Back to items</button>
   </div>
 </div>
 
@@ -3598,6 +3598,8 @@ function goToPCSignatures() {
     initSigPad('owner');
     initSigPad('contractor');
   }, 400);
+  // Prevent body scroll interfering with signature drawing
+  document.body.style.overflow = 'hidden';
 }
 
 function initSigPad(which) {
@@ -3739,6 +3741,7 @@ function captureSig(which) {
 }
 
 async function completePCCertificate() {
+  document.body.style.overflow = '';
   if (!pcSigs.owner) { showToast('Please capture the owner signature'); return; }
   if (!pcSigs.contractor) { showToast('Please capture the contractor signature'); return; }
 
