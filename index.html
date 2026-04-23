@@ -120,6 +120,13 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
 
 
 
+
+/* LOADING OVERLAY */
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(51,63,72,0.85);z-index:300;flex-direction:column;align-items:center;justify-content:center;}
+.loading-overlay.show{display:flex;}
+.loading-overlay .lo-spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,.2);border-top-color:#B7B09C;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:16px;}
+.loading-overlay .lo-text{color:#fff;font-size:14px;font-weight:500;text-align:center;line-height:1.5;}
+
 /* PC CERTIFICATE */
 .sig-pad-wrap{background:#F7F6F4;border:1.5px solid #E4E0DA;border-radius:10px;padding:12px;margin-bottom:12px;}
 .sig-pad-label{font-size:11px;font-weight:600;color:#9A9690;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;display:block;}
@@ -481,7 +488,11 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
   </div>
   <div class="body">
     <div style="font-size:14px;font-weight:600;color:#333F48;margin-bottom:4px;">Capture signatures</div>
-    <div style="font-size:12px;color:#9A9690;margin-bottom:20px;">Both parties must sign before the certificate is completed.</div>
+    <div style="font-size:12px;color:#9A9690;margin-bottom:16px;">Please read the declaration below before signing.</div>
+    <div style="background:#F0EDE8;border-radius:10px;padding:14px 16px;margin-bottom:20px;border:1px solid #DDD9D2;">
+      <div style="font-size:10px;font-weight:700;color:#B7B09C;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Declaration</div>
+      <div id="sig-declaration-text" style="font-size:12px;color:#5C5A57;line-height:1.7;"></div>
+    </div>
 
     <div class="sig-pad-wrap">
       <span class="sig-pad-label">Owner signature — <span id="sig-owner-name"></span></span>
@@ -649,6 +660,10 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="loading-overlay" id="loading-overlay">
+  <div class="lo-spinner"></div>
+  <div class="lo-text" id="loading-text">Saving…</div>
+</div>
 
 <!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -1128,8 +1143,9 @@ async function goSummary() {
       }
     }
 
+    hideLoading();
     showToast('Inspection saved ✓');
-  } catch(e) { showToast('Could not save — check connection'); }
+  } catch(e) { hideLoading(); showToast('Could not save — check connection'); }
 
   buildSummary();
   showScreen('screen-sum');
@@ -1240,6 +1256,7 @@ function buildReportBody() {
 }
 
 async function generateEmail() {
+  showLoading('Preparing email…');
   const {p,f,na,fi,out} = getCounts();
   const verdict = f===0&&out===0?'PASSED':'REQUIRES RECTIFICATION';
   const reportUrl = `https://pacificbluedevelopments.github.io/qa-inspections/report.html?job=${currentJob.id}&insp=${currentInspection.id}`;
@@ -1255,6 +1272,7 @@ async function generateEmail() {
   const ccEmails = await getCCEmails();
   const ccStr = ccEmails.length?ccEmails.map(e=>encodeURIComponent(e)).join(','):'';
   const ccParam = ccStr?`&cc=${ccStr}`:'';
+  hideLoading();
   window.location.href = `mailto:?${ccParam}&subject=${subj}&body=${encodeURIComponent(body)}`;
 }
 
@@ -1479,6 +1497,11 @@ function removePCPhoto(id, idx, wrap) {
 
 function goToPCSignatures() {
   document.getElementById('sig-owner-name').textContent = pcData.owner;
+  // Populate declaration with actual date and owner
+  const declEl = document.getElementById('sig-declaration-text');
+  if (declEl) {
+    declEl.textContent = "The Owner (" + pcData.owner + ") has inspected the site on " + pcData.date + " and acknowledges that the Contractor (Pacific Blue Developments Pty Ltd) has duly performed the contract to the Owner's satisfaction, and agrees that the works have reached Practical Completion and are in good order except for the items listed in this certificate.";
+  }
   showScreen('screen-pc-signatures');
   setTimeout(() => {
     initSigPad('owner');
@@ -1532,7 +1555,7 @@ async function completePCCertificate() {
   if (!pcSigs.owner) { showToast('Please capture the owner signature'); return; }
   if (!pcSigs.contractor) { showToast('Please capture the contractor signature'); return; }
 
-  showToast('Saving certificate…');
+  showLoading('Saving certificate…');
 
   // Upload photos to Storage
   const uploadedPhotos = {};
@@ -1579,6 +1602,7 @@ async function completePCCertificate() {
 
   try {
     const ref = await db.collection('jobs').doc(currentJob.id).collection('pc-certificates').add(certData);
+    hideLoading();
     showToast('Certificate saved ✓');
     // Navigate to job detail first
     showScreen('screen-job-detail');
@@ -2127,6 +2151,15 @@ function showScreen(id) {
 
 function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+
+function showLoading(msg) {
+  document.getElementById('loading-text').textContent = msg || 'Please wait…';
+  document.getElementById('loading-overlay').classList.add('show');
+}
+function hideLoading() {
+  document.getElementById('loading-overlay').classList.remove('show');
+}
 
 function showToast(msg) {
   const t=document.getElementById('toast');
