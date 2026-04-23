@@ -496,9 +496,9 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
       <div id="sig-declaration-text" style="font-size:12px;color:#5C5A57;line-height:1.7;"></div>
     </div>
 
-    <div class="sig-pad-wrap">
+    <div class="sig-pad-wrap" id="sig-pad-wrap-owner">
       <span class="sig-pad-label">Owner signature — <span id="sig-owner-name"></span></span>
-      <canvas id="sig-canvas-owner" class="sig-canvas"></canvas>
+      <svg id="sig-svg-owner" style="display:block;touch-action:none;cursor:crosshair;background:#fff;border-radius:8px;border:1.5px solid #E4E0DA;width:100%;height:160px;"></svg>
       <img id="sig-preview-owner" class="sig-preview">
       <div class="sig-actions">
         <button class="sig-clear" onclick="clearSig('owner')">Clear</button>
@@ -506,9 +506,9 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
       </div>
     </div>
 
-    <div class="sig-pad-wrap">
+    <div class="sig-pad-wrap" id="sig-pad-wrap-contractor">
       <span class="sig-pad-label">Contractor signature — Pacific Blue Developments Pty Ltd</span>
-      <canvas id="sig-canvas-contractor" class="sig-canvas"></canvas>
+      <svg id="sig-svg-contractor" style="display:block;touch-action:none;cursor:crosshair;background:#fff;border-radius:8px;border:1.5px solid #E4E0DA;width:100%;height:160px;"></svg>
       <img id="sig-preview-contractor" class="sig-preview">
       <div class="sig-actions">
         <button class="sig-clear" onclick="clearSig('contractor')">Clear</button>
@@ -750,9 +750,9 @@ document.getElementById('login-password').addEventListener('keydown', e => { if(
 // ── CHECKLISTS ────────────────────────────────────────────────────────────
 async function seedDefaultChecklists() {
   const snap = await db.collection('checklists').get();
-  // Only seed if no non-defect-register checklists exist
+  // Only seed if no regular checklists exist (Defect Register doesn't count)
   const existing = snap.docs.filter(d => !d.data().isDefectRegister);
-  if (existing.length > 0) return;
+  if (existing.length >= 5) return; // Already seeded
   const checklists = 
 [
   {
@@ -3601,75 +3601,141 @@ function goToPCSignatures() {
 }
 
 function initSigPad(which) {
-  const canvas = document.getElementById('sig-canvas-'+which);
-  if (!canvas) return;
+  const wrap = document.getElementById('sig-pad-wrap-' + which);
+  const svg = document.getElementById('sig-svg-' + which);
+  if (!wrap || !svg) return;
 
-  // Force touch-action none to prevent scroll interference on iPhone
-  canvas.style.touchAction = 'none';
-  canvas.style.userSelect = 'none';
-  canvas.style.webkitUserSelect = 'none';
+  // Set SVG size to match wrapper
+  const rect = wrap.getBoundingClientRect();
+  const W = rect.width || wrap.offsetWidth || 300;
+  const H = 160;
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svg.style.width = W + 'px';
+  svg.style.height = H + 'px';
 
-  // Use parent width if canvas has no size yet
-  const w = canvas.parentElement ? canvas.parentElement.offsetWidth - 24 : 300;
-  const h = 140;
-  canvas.style.width = w + 'px';
-  canvas.style.height = h + 'px';
-  canvas.width = w * (window.devicePixelRatio || 1);
-  canvas.height = h * (window.devicePixelRatio || 1);
+  let drawing = false;
+  let currentPath = null;
+  let points = [];
 
-  const ctx = canvas.getContext('2d');
-  ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
-  ctx.strokeStyle = '#1A1F24';
-  ctx.lineWidth = 2.5;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  sigCtx[which] = ctx;
-  sigDrawing[which] = false;
-
-  const getPos = (e) => {
-    const rect = canvas.getBoundingClientRect();
+  function getXY(e) {
+    const r = svg.getBoundingClientRect();
     const src = e.touches ? e.touches[0] : e;
     return {
-      x: (src.clientX - rect.left),
-      y: (src.clientY - rect.top)
+      x: Math.round(src.clientX - r.left),
+      y: Math.round(src.clientY - r.top)
     };
-  };
+  }
 
-  // Remove old listeners by cloning
-  const newCanvas = canvas.cloneNode(true);
-  canvas.parentNode.replaceChild(newCanvas, canvas);
-  const c = newCanvas;
-  c.style.touchAction = 'none';
+  function startDraw(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    drawing = true;
+    points = [];
+    const p = getXY(e);
+    points.push(p);
+    currentPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    currentPath.setAttribute('stroke', '#1A1F24');
+    currentPath.setAttribute('stroke-width', '2.5');
+    currentPath.setAttribute('stroke-linecap', 'round');
+    currentPath.setAttribute('stroke-linejoin', 'round');
+    currentPath.setAttribute('fill', 'none');
+    currentPath.setAttribute('d', 'M' + p.x + ',' + p.y);
+    svg.appendChild(currentPath);
+    sigDrawing[which] = true;
+  }
 
-  c.addEventListener('mousedown', function(e) { e.preventDefault(); sigDrawing[which]=true; const p=getPos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); }, { passive: false });
-  c.addEventListener('touchstart', function(e) { e.preventDefault(); sigDrawing[which]=true; const p=getPos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); }, { passive: false });
-  c.addEventListener('mousemove', function(e) { e.preventDefault(); if(!sigDrawing[which]) return; const p=getPos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); }, { passive: false });
-  c.addEventListener('touchmove', function(e) { e.preventDefault(); if(!sigDrawing[which]) return; const p=getPos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); }, { passive: false });
-  c.addEventListener('mouseup', function(e) { sigDrawing[which]=false; });
-  c.addEventListener('touchend', function(e) { sigDrawing[which]=false; });
+  function moveDraw(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!drawing || !currentPath) return;
+    const p = getXY(e);
+    points.push(p);
+    // Smooth curve through points
+    let d = 'M' + points[0].x + ',' + points[0].y;
+    for (let i = 1; i < points.length; i++) {
+      const prev = points[i-1];
+      const curr = points[i];
+      const mx = (prev.x + curr.x) / 2;
+      const my = (prev.y + curr.y) / 2;
+      d += ' Q' + prev.x + ',' + prev.y + ' ' + mx + ',' + my;
+    }
+    currentPath.setAttribute('d', d);
+  }
+
+  function endDraw(e) {
+    e.preventDefault();
+    drawing = false;
+    currentPath = null;
+  }
+
+  // Remove old listeners by replacing SVG
+  const newSvg = svg.cloneNode(false);
+  svg.parentNode.replaceChild(newSvg, svg);
+
+  // Re-assign reference
+  const s = document.getElementById('sig-svg-' + which);
+  s.setAttribute('width', W);
+  s.setAttribute('height', H);
+  s.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  s.style.cssText = 'width:' + W + 'px;height:' + H + 'px;display:block;touch-action:none;cursor:crosshair;background:#fff;border-radius:8px;border:1.5px solid #E4E0DA;';
+
+  s.addEventListener('mousedown', startDraw, {passive: false});
+  s.addEventListener('touchstart', startDraw, {passive: false});
+  s.addEventListener('mousemove', moveDraw, {passive: false});
+  s.addEventListener('touchmove', moveDraw, {passive: false});
+  s.addEventListener('mouseup', endDraw, {passive: false});
+  s.addEventListener('touchend', endDraw, {passive: false});
+  s.addEventListener('mouseleave', endDraw, {passive: false});
+
+  sigCtx[which] = s; // store reference for captureSig
 }
 
+
 function clearSig(which) {
-  if (sigCtx[which]) {
-    const canvas = document.getElementById('sig-canvas-'+which);
-    const w = canvas ? parseInt(canvas.style.width) || 300 : 300;
-    const h = canvas ? parseInt(canvas.style.height) || 140 : 140;
-    sigCtx[which].clearRect(0, 0, w * (window.devicePixelRatio||1), h * (window.devicePixelRatio||1));
-    if (canvas) canvas.style.display = 'block';
+  const svg = document.getElementById('sig-svg-' + which);
+  if (svg) {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    svg.style.display = 'block';
   }
   pcSigs[which] = null;
-  const preview = document.getElementById('sig-preview-'+which);
+  const preview = document.getElementById('sig-preview-' + which);
   if (preview) preview.style.display = 'none';
 }
 
 function captureSig(which) {
-  const canvas = document.getElementById('sig-canvas-'+which);
-  pcSigs[which] = canvas.toDataURL('image/png');
-  const preview = document.getElementById('sig-preview-'+which);
-  preview.src = pcSigs[which];
-  preview.style.display = 'block';
-  canvas.style.display = 'none';
-  showToast('Signature captured ✓');
+  const svg = document.getElementById('sig-svg-' + which);
+  if (!svg) { showToast('Signature pad not ready'); return; }
+  // Check if anything was drawn
+  if (svg.children.length === 0) { showToast('Please sign before capturing'); return; }
+  // Convert SVG to PNG via canvas
+  const W = parseInt(svg.getAttribute('width')) || 300;
+  const H = parseInt(svg.getAttribute('height')) || 160;
+  const canvas = document.createElement('canvas');
+  canvas.width = W * 2;
+  canvas.height = H * 2;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(2, 2);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, W, H);
+  const svgData = new XMLSerializer().serializeToString(svg);
+  const img = new Image();
+  const blob = new Blob([svgData], {type: 'image/svg+xml'});
+  const url = URL.createObjectURL(blob);
+  img.onload = function() {
+    ctx.drawImage(img, 0, 0, W, H);
+    URL.revokeObjectURL(url);
+    pcSigs[which] = canvas.toDataURL('image/png');
+    const preview = document.getElementById('sig-preview-' + which);
+    if (preview) {
+      preview.src = pcSigs[which];
+      preview.style.display = 'block';
+    }
+    svg.style.display = 'none';
+    showToast('Signature captured ✓');
+  };
+  img.src = url;
 }
 
 async function completePCCertificate() {
