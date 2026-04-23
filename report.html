@@ -112,7 +112,8 @@ async function loadReport() {
 
     let itemsHtml = '';
     items.forEach((item, idx) => {
-      const num = String(idx+1);
+      // Use savedItem num if available (preserves AH1, AH2 keys for ad hoc items)
+      const num = (insp.savedItems && insp.savedItems[idx]) ? insp.savedItems[idx].num : String(idx+1);
       const r = results[num]||'—';
       const nt = notes[num]||'';
       const ph = (photos[num]||[]).filter(Boolean);
