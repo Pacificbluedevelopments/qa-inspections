@@ -1220,7 +1220,9 @@ function buildReportBody() {
       </div>
       <div style="font-size:12px;color:#5C5A57;line-height:1.55;${nt||ph.length?'margin-bottom:8px':''}">${rq}</div>
       ${nt?`<div style="font-size:12px;color:#333;background:#F7F6F4;padding:8px 10px;border-radius:6px;border-left:3px solid #B7B09C;${ph.length?'margin-bottom:8px':''}">${nt}</div>`:''}
-      ${ph.length?'<div style="display:flex;flex-wrap:wrap;gap:8px;">'+ph.map(s=>`<img src="${s}" style="width:100%;max-width:100%;height:auto;border-radius:6px;border:1px solid #ddd;display:block;">`).join('')+'</div>':''}
+      ${ph.length?`<div style="background:#F7F6F4;border-radius:6px;padding:8px 12px;font-size:12px;color:#9A9690;margin-top:4px;">📷 ${ph.length} photo${ph.length>1?'s':''} — visible in the report link</div>`:''}">${rq}</div>
+      ${nt?`<div style="font-size:12px;color:#333;background:#F7F6F4;padding:8px 10px;border-radius:6px;border-left:3px solid #B7B09C;${ph.length?'margin-bottom:8px':''}">${nt}</div>`:''}
+      ${ph.length?'<div style="display:flex;flex-wrap:wrap;gap:8px;">'+ph.map(s=>`<img src="${s}" loading="lazy" style="width:100%;max-width:100%;height:auto;border-radius:6px;border:1px solid #ddd;display:block;">`).join('')+'</div>':''}
     </div>`;
   });
 
@@ -2195,7 +2197,7 @@ function compressImage(file) {
     reader.onload=e=>{
       const img=new Image();
       img.onload=()=>{
-        const scale=Math.min(1,1200/img.width);
+        const scale=Math.min(1,800/img.width);
         const w=Math.round(img.width*scale),h=Math.round(img.height*scale);
         const canvas=document.createElement('canvas');
         canvas.width=w; canvas.height=h;
