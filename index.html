@@ -895,7 +895,14 @@ function beginInspection() {
 
 async function viewSavedInspection(insp) {
   const cl = checklists[insp.checklistId];
-  if (cl) activeItems = cl.items.map((item,i)=>[String(i+1),item.name,item.desc]);
+  // Use savedItems if present (covers Defect Register and ad hoc items)
+  if (insp.savedItems && insp.savedItems.length) {
+    activeItems = insp.savedItems.map(item => [item.num, item.name, item.desc]);
+  } else if (cl) {
+    activeItems = cl.items.map((item,i)=>[String(i+1),item.name,item.desc]);
+  } else {
+    activeItems = [];
+  }
   activeLabel = insp.type;
   currentInspection = insp;
   results = insp.results||{};
@@ -1064,10 +1071,20 @@ async function goSummary() {
     }
   }
 
+  // Update ad hoc item names/descs before saving
+  activeItems = activeItems.map(([num, name, desc]) => {
+    if (num.startsWith('AH')) {
+      return [num, adHocNames[num] || name, adHocDescs[num] || desc];
+    }
+    return [num, name, desc];
+  });
+  // Save activeItems so ad hoc items (Defect Register) are preserved
+  const savedItems = activeItems.map(([num, name, desc]) => ({ num, name, desc }));
   const inspData = {
     ...currentInspection,
     results, notes,
     photoURLs,
+    savedItems,
     pass:p, fail:f, na, outstanding:out,
   };
 

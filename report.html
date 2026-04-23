@@ -89,8 +89,14 @@ async function loadReport() {
     }
     const job = { id: jobDoc.id, ...jobDoc.data() };
     const insp = { id: inspDoc.id, ...inspDoc.data() };
-    const clDoc = await db.collection('checklists').doc(insp.checklistId).get();
-    const items = clDoc.exists ? clDoc.data().items : [];
+    // Use savedItems if present (covers Defect Register and ad hoc items added on site)
+    let items = [];
+    if (insp.savedItems && insp.savedItems.length) {
+      items = insp.savedItems.map(function(item){ return { name: item.name, desc: item.desc }; });
+    } else {
+      const clDoc = await db.collection('checklists').doc(insp.checklistId).get();
+      items = clDoc.exists ? clDoc.data().items : [];
+    }
     const results = insp.results || {};
     const notes = insp.notes || {};
     const photos = insp.photoURLs || insp.photos || {};
