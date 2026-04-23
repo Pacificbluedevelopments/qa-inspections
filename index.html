@@ -1370,7 +1370,7 @@ function addPCItem(part) {
   tradeInput.type = 'text';
   tradeInput.id = 'pctrade-' + id;
   tradeInput.placeholder = 'Trade (e.g. Painters)';
-  tradeInput.style.cssText = 'font-size:11px;font-weight:700;color:#B7B09C;text-transform:uppercase;letter-spacing:.06em;border:none;background:transparent;outline:none;width:60%;';
+  tradeInput.style.cssText = 'font-size:13px;font-weight:600;color:#1A1F24;border:1.5px solid #E4E0DA;border-radius:8px;background:#F7F6F4;outline:none;width:100%;padding:10px 12px;margin-bottom:10px;font-family:Poppins,sans-serif;display:block;';
   tradeInput.oninput = function() { updatePCItemById(id, part); };
   header.appendChild(tradeInput);
 
@@ -1668,6 +1668,25 @@ async function completePCCertificate() {
 
   try {
     const ref = await db.collection('jobs').doc(currentJob.id).collection('pc-certificates').add(certData);
+    // Create defects for all PC items
+    for (const item of [...pcItems.part1, ...pcItems.part2]) {
+      const desc = item.lines && item.lines.length ? item.lines.join('\n') : (item.desc || '');
+      if (!item.trade && !desc) continue;
+      const photoSrc = item.photos && item.photos.length ? item.photos[0] : null;
+      await db.collection('jobs').doc(currentJob.id).collection('defects').add({
+        name: (item.trade || 'PC Item') + (item.badge ? ' — ' + (item.badge === 'defect' ? 'Minor Defect' : 'Minor Omission') : ''),
+        desc: desc,
+        subcontractor: item.trade || 'Not specified',
+        photoURL: photoSrc || null,
+        status: 'open',
+        raisedBy: currentUser?.email || 'Unknown',
+        dateRaised: certData.date,
+        rectDate: item.rectDate || '',
+        source: 'PC Certificate',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    hideLoading();
     hideLoading();
     showToast('Certificate saved ✓');
     // Navigate to job detail first
