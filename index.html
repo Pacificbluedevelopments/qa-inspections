@@ -702,6 +702,7 @@ const LOGO = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwU
 let currentUser = null;
 let currentJob = null;
 let currentInspection = null;
+const DRAFT_KEY = () => `pb_inspection_draft_${currentUser?.uid || 'anon'}`;
 let checklists = {};
 let editingChecklistId = null;
 let editingItemIdx = null;
@@ -4440,8 +4441,6 @@ window.loadPCCertificates=loadPCCertificates;
 window.openPCCertificate=openPCCertificate;
 
 // ── Draft auto-save (localStorage) ───────────────────────────────────────────
-const DRAFT_KEY = () => `pb_inspection_draft_${currentUser?.uid || 'anon'}`;
-
 function autoSaveDraft() {
   if (!currentInspection || !currentJob) return;
   try {
