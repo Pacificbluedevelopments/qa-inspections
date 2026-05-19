@@ -4440,7 +4440,7 @@ window.loadPCCertificates=loadPCCertificates;
 window.openPCCertificate=openPCCertificate;
 
 // ── Draft auto-save (localStorage) ───────────────────────────────────────────
-const DRAFT_KEY = 'pb_inspection_draft';
+const DRAFT_KEY = () => `pb_inspection_draft_${currentUser?.uid || 'anon'}`;
 
 function autoSaveDraft() {
   if (!currentInspection || !currentJob) return;
@@ -4458,7 +4458,7 @@ function autoSaveDraft() {
       adHocDescs: adHocDescs || {},
       savedAt: new Date().toISOString(),
     };
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    localStorage.setItem(DRAFT_KEY(), JSON.stringify(draft));
   } catch(e) {
     // Storage full (large photos) — silently ignore, data is still in memory
     console.warn('Draft save failed:', e);
@@ -4466,12 +4466,12 @@ function autoSaveDraft() {
 }
 
 function clearDraft() {
-  localStorage.removeItem(DRAFT_KEY);
+  localStorage.removeItem(DRAFT_KEY());
 }
 
 function checkForDraft() {
   try {
-    const raw = localStorage.getItem(DRAFT_KEY);
+    const raw = localStorage.getItem(DRAFT_KEY());
     if (!raw) return;
     const draft = JSON.parse(raw);
     if (!draft || !draft.currentInspection || !draft.currentJob) return;
