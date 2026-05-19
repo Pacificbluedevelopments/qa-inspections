@@ -4054,7 +4054,7 @@ function openAdHocItem() {
   autoSaveDraft();
 }
 
-const adHocNames = {}, adHocDescs = {};
+let adHocNames = {}, adHocDescs = {};
 function updateAdHocName(num, val) { adHocNames[num] = val; }
 function updateAdHocDesc(num, val) { adHocDescs[num] = val; }
 
@@ -4496,6 +4496,7 @@ function checkForDraft() {
       return;
     }
 
+    console.log('Restoring draft — step 1: setting state vars');
     // Restore all state
     currentJob = draft.currentJob;
     currentInspection = draft.currentInspection;
@@ -4509,10 +4510,10 @@ function checkForDraft() {
     if (typeof adHocNames !== 'undefined') adHocNames = draft.adHocNames || {};
     if (typeof adHocDescs !== 'undefined') adHocDescs = draft.adHocDescs || {};
 
-    // Show screen first so DOM elements exist before we try to populate them
+    console.log('Restoring draft — step 2: showScreen');
     showScreen('screen-check');
 
-    // Rebuild the checklist UI
+    console.log('Restoring draft — step 3: buildChecklist, activeItems=', activeItems.length);
     buildChecklist();
 
     // Restore result button states visually
@@ -4544,6 +4545,7 @@ function checkForDraft() {
       });
     });
 
+    console.log('Restoring draft — step 4: all done');
     showToast('Draft restored — ' + itemsDone + ' of ' + itemsTotal + ' items done');
   } catch(e) {
     console.warn('Draft restore failed:', e);
