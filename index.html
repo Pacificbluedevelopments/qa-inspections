@@ -4509,6 +4509,9 @@ function checkForDraft() {
     if (typeof adHocNames !== 'undefined') adHocNames = draft.adHocNames || {};
     if (typeof adHocDescs !== 'undefined') adHocDescs = draft.adHocDescs || {};
 
+    // Show screen first so DOM elements exist before we try to populate them
+    showScreen('screen-check');
+
     // Rebuild the checklist UI
     buildChecklist();
 
@@ -4541,7 +4544,6 @@ function checkForDraft() {
       });
     });
 
-    showScreen('screen-check');
     showToast('Draft restored — ' + itemsDone + ' of ' + itemsTotal + ' items done');
   } catch(e) {
     console.warn('Draft restore failed:', e);
