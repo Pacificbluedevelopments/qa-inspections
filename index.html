@@ -4458,9 +4458,17 @@ function autoSaveDraft() {
       adHocDescs: adHocDescs || {},
       savedAt: new Date().toISOString(),
     };
-    localStorage.setItem(DRAFT_KEY(), JSON.stringify(draft));
+    try {
+      localStorage.setItem(DRAFT_KEY(), JSON.stringify(draft));
+      console.log('Draft saved OK for user', currentUser?.uid);
+    } catch(e) {
+      // Storage full — retry without photos (results and notes always saved)
+      draft.photos = {};
+      draft.photosDropped = true;
+      localStorage.setItem(DRAFT_KEY(), JSON.stringify(draft));
+      console.log('Draft saved without photos (storage limit hit)');
+    }
   } catch(e) {
-    // Storage full (large photos) — silently ignore, data is still in memory
     console.warn('Draft save failed:', e);
   }
 }
@@ -4472,16 +4480,18 @@ function clearDraft() {
 function checkForDraft() {
   try {
     const raw = localStorage.getItem(DRAFT_KEY());
-    if (!raw) return;
+    if (!raw) { console.log('checkForDraft: no draft found for key', DRAFT_KEY()); return; }
     const draft = JSON.parse(raw);
     if (!draft || !draft.currentInspection || !draft.currentJob) return;
+    console.log('checkForDraft: draft found', draft);
 
     const itemsDone = Object.keys(draft.results || {}).length;
     const itemsTotal = (draft.activeItems || []).length;
     const savedTime = draft.savedAt ? new Date(draft.savedAt).toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit' }) : 'earlier';
     const savedDate = draft.savedAt ? new Date(draft.savedAt).toLocaleDateString('en-AU', { day:'2-digit', month:'short' }) : '';
+    const photoNote = draft.photosDropped ? '\n(Note: photos could not be saved to draft due to device storage limits)' : '';
 
-    const msg = `Unsaved inspection found:\n\n${draft.currentInspection.type}\n${draft.currentJob.address}\n${itemsDone} of ${itemsTotal} items done (saved ${savedDate} at ${savedTime})\n\nResume this inspection?`;
+    const msg = `Unsaved inspection found:\n\n${draft.currentInspection.type}\n${draft.currentJob.address}\n${itemsDone} of ${itemsTotal} items done (saved ${savedDate} at ${savedTime})${photoNote}\n\nResume this inspection?`;
     if (!confirm(msg)) {
       clearDraft();
       return;
