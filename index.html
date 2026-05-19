@@ -716,7 +716,7 @@ auth.onAuthStateChanged(user => {
   if (user) {
     currentUser = user;
     showScreen('screen-setup');
-    seedDefaultChecklists().then(() => loadChecklists());
+    seedDefaultChecklists().then(() => loadChecklists().then(() => checkForDraft()));
   } else {
     currentUser = null;
     showScreen('screen-login');
@@ -3016,7 +3016,7 @@ function buildChecklist() {
         <button class="rbtn" onclick="setResult('${num}','NA',this)">— N/A</button>
       </div>
       <label class="note-label">Notes</label>
-      <textarea class="note-field" id="note-${num}" placeholder="Add notes for this item…" oninput="notes['${num}']=this.value"></textarea>
+      <textarea class="note-field" id="note-${num}" placeholder="Add notes for this item…" oninput="notes['${num}']=this.value; autoSaveDraft()"></textarea>
       <label class="note-label">Photos</label>
       <div class="photos-row" id="photos-${num}"></div>
       <label class="photo-label-btn">📷 Add photo<input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="handlePhotos('${num}',this)"></label>
@@ -3034,6 +3034,7 @@ function setResult(num, val, btn) {
   card.querySelectorAll('.rbtn').forEach(b=>b.classList.remove('sel-pass','sel-fail','sel-na'));
   btn.classList.add(val==='PASS'?'sel-pass':val==='FAIL'?'sel-fail':'sel-na');
   updateProgress();
+  autoSaveDraft();
 }
 
 async function handlePhotos(num, input) {
@@ -3052,6 +3053,7 @@ async function handlePhotos(num, input) {
     row.appendChild(wrap);
   }
   input.value = '';
+  autoSaveDraft();
 }
 
 function removePhoto(num, idx) {
@@ -3059,6 +3061,7 @@ function removePhoto(num, idx) {
   if (photoFiles[num]) photoFiles[num][idx] = null;
   const wrap = document.getElementById('thumb-'+num+'-'+idx);
   if (wrap) wrap.remove();
+  autoSaveDraft();
 }
 
 function updateProgress() {
@@ -3164,6 +3167,7 @@ async function goSummary() {
 
     hideLoading();
     showToast('Inspection saved ✓');
+    clearDraft();
   } catch(e) { hideLoading(); showToast('Could not save — check connection'); }
 
   buildSummary();
@@ -4035,7 +4039,7 @@ function openAdHocItem() {
       <button class="rbtn" onclick="setResult('${num}','NA',this)">— N/A</button>
     </div>
     <label class="note-label">Notes</label>
-    <textarea class="note-field" id="note-${num}" placeholder="Add notes…" oninput="notes['${num}']=this.value"></textarea>
+    <textarea class="note-field" id="note-${num}" placeholder="Add notes…" oninput="notes['${num}']=this.value; autoSaveDraft()"></textarea>
     <label class="note-label">Photos</label>
     <div class="photos-row" id="photos-${num}"></div>
     <label class="photo-label-btn">📷 Add photo<input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="handlePhotos('${num}',this)"></label>
@@ -4046,6 +4050,7 @@ function openAdHocItem() {
   if (!currentInspection) currentInspection = {};
   currentInspection.totalItems = activeItems.length;
   div.scrollIntoView({ behavior:'smooth' });
+  autoSaveDraft();
 }
 
 const adHocNames = {}, adHocDescs = {};
@@ -4353,7 +4358,7 @@ function goBackToSummary() {
 
 function confirmHome() {
   if(Object.keys(results).length===0){ showScreen('screen-setup'); return; }
-  if(confirm('Return to home? Your progress will be lost.')){ results={}; notes={}; photos={}; photoFiles={}; showScreen('screen-setup'); }
+  if(confirm('Return to home? Your progress will be lost.')){ results={}; notes={}; photos={}; photoFiles={}; clearDraft(); showScreen('screen-setup'); }
 }
 
 function showScreen(id) {
@@ -4433,6 +4438,107 @@ window.addPCLine=addPCLine;
 window.updatePCLines=updatePCLines;
 window.loadPCCertificates=loadPCCertificates;
 window.openPCCertificate=openPCCertificate;
+
+// ── Draft auto-save (localStorage) ───────────────────────────────────────────
+const DRAFT_KEY = 'pb_inspection_draft';
+
+function autoSaveDraft() {
+  if (!currentInspection || !currentJob) return;
+  try {
+    const draft = {
+      currentJob: { id: currentJob.id, address: currentJob.address, jobNumber: currentJob.jobNumber, client: currentJob.client || '' },
+      currentInspection,
+      activeItems,
+      activeLabel,
+      results,
+      notes,
+      photos,          // base64 data URLs — survives offline
+      adHocItemCount: adHocItemCount || 0,
+      adHocNames: adHocNames || {},
+      adHocDescs: adHocDescs || {},
+      savedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  } catch(e) {
+    // Storage full (large photos) — silently ignore, data is still in memory
+    console.warn('Draft save failed:', e);
+  }
+}
+
+function clearDraft() {
+  localStorage.removeItem(DRAFT_KEY);
+}
+
+function checkForDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+    if (!draft || !draft.currentInspection || !draft.currentJob) return;
+
+    const itemsDone = Object.keys(draft.results || {}).length;
+    const itemsTotal = (draft.activeItems || []).length;
+    const savedTime = draft.savedAt ? new Date(draft.savedAt).toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit' }) : 'earlier';
+    const savedDate = draft.savedAt ? new Date(draft.savedAt).toLocaleDateString('en-AU', { day:'2-digit', month:'short' }) : '';
+
+    const msg = `Unsaved inspection found:\n\n${draft.currentInspection.type}\n${draft.currentJob.address}\n${itemsDone} of ${itemsTotal} items done (saved ${savedDate} at ${savedTime})\n\nResume this inspection?`;
+    if (!confirm(msg)) {
+      clearDraft();
+      return;
+    }
+
+    // Restore all state
+    currentJob = draft.currentJob;
+    currentInspection = draft.currentInspection;
+    activeItems = draft.activeItems || [];
+    activeLabel = draft.activeLabel || draft.currentInspection.type;
+    results = draft.results || {};
+    notes = draft.notes || {};
+    photos = draft.photos || {};
+    photoFiles = {};
+    adHocItemCount = draft.adHocItemCount || 0;
+    if (typeof adHocNames !== 'undefined') adHocNames = draft.adHocNames || {};
+    if (typeof adHocDescs !== 'undefined') adHocDescs = draft.adHocDescs || {};
+
+    // Rebuild the checklist UI
+    buildChecklist();
+
+    // Restore result button states visually
+    Object.entries(results).forEach(([num, val]) => {
+      const card = document.getElementById('card-' + num);
+      if (!card) return;
+      card.className = 'icard' + (val === 'PASS' ? ' is-pass' : val === 'FAIL' ? ' is-fail' : ' is-na');
+      const btnIndex = val === 'PASS' ? 1 : val === 'FAIL' ? 2 : 3;
+      const btn = card.querySelector('.rbtn:nth-child(' + btnIndex + ')');
+      if (btn) btn.classList.add(val === 'PASS' ? 'sel-pass' : val === 'FAIL' ? 'sel-fail' : 'sel-na');
+    });
+
+    // Restore notes
+    Object.entries(notes).forEach(([num, note]) => {
+      const el = document.getElementById('note-' + num);
+      if (el) el.value = note;
+    });
+
+    // Restore photo thumbnails
+    Object.entries(photos).forEach(([num, photoList]) => {
+      if (!photoList || !photoList.length) return;
+      const row = document.getElementById('photos-' + num);
+      if (!row) return;
+      photoList.filter(Boolean).forEach((src, idx) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'thumb-wrap';
+        wrap.innerHTML = `<img class="thumb" src="${src}"><button class="thumb-del" onclick="removePhoto('${num}',${idx})">×</button>`;
+        row.appendChild(wrap);
+      });
+    });
+
+    showScreen('screen-check');
+    showToast('Draft restored — ' + itemsDone + ' of ' + itemsTotal + ' items done');
+  } catch(e) {
+    console.warn('Draft restore failed:', e);
+    clearDraft();
+  }
+}
 </script>
 </body>
 </html>
