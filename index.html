@@ -578,6 +578,11 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
         <div class="field" style="margin-bottom:14px;"><label>CC 3</label><input id="cc-email-3" type="email" inputmode="email" placeholder="Optional"></div>
         <button class="primary-btn" style="margin-bottom:0;" onclick="saveCCEmails()">Save CC emails</button>
       </div>
+      <div style="background:#EFF3F8;border:1.5px solid #C5D0E0;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+        <div style="font-size:13px;font-weight:700;color:#123570;margin-bottom:3px;">Studio Sora — Design DDC</div>
+        <div style="font-size:12px;color:#5C5A57;margin-bottom:10px;line-height:1.5;">Adds the Studio Sora Design Due Diligence Checklist to the inspection list. Only needs to be done once.</div>
+        <button class="primary-btn" style="margin-bottom:0;background:#123570;" onclick="seedDesignDDC()">Add Design DDC checklist</button>
+      </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
         <div style="font-size:14px;font-weight:700;color:#333F48;">Checklists</div>
         <button class="add-item-btn" onclick="openAddChecklist()">+ New checklist</button>
@@ -4401,6 +4406,83 @@ window.openAddChecklist=openAddChecklist; window.saveNewChecklist=saveNewCheckli
 window.deleteChecklist=deleteChecklist; window.openEditChecklist=openEditChecklist;
 window.openAddItem=openAddItem; window.openEditItem=openEditItem;
 window.saveItem=saveItem; window.deleteItem=deleteItem; window.saveChecklist=saveChecklist;
+
+// ── DESIGN DDC SEED ───────────────────────────────────────────────────────
+async function seedDesignDDC() {
+  // Check if it already exists
+  const snap = await db.collection('checklists').where('label','==','Design Due Diligence').get();
+  if (!snap.empty) { showToast('Design DDC already exists'); return; }
+
+  const ddcItems = [
+    // Section 1 — Site Documentation
+    { name:"[1] Contour / Survey Plan", desc:"Confirms site levels and fall across the building platform. Status: Confirmed / Pending / N/A" },
+    { name:"[1] Title Search", desc:"Confirms ownership, boundaries, and registered interests. Status: Confirmed / Pending / N/A" },
+    { name:"[1] Flood Disclosure Report", desc:"Identifies flood risk and applicable overlays. Status: Confirmed / Pending / N/A" },
+    { name:"[1] Site Classification Report", desc:"Soil classification relevant to slab and footing design. Status: Confirmed / Pending / N/A" },
+    { name:"[1] Easements Identified", desc:"All registered easements shown on title and survey. Status: Confirmed / Pending / N/A" },
+    { name:"[1] Slope Stability Assessment", desc:"Required for steep or complex sites. Status: Confirmed / Pending / N/A" },
+    { name:"[1] Bushfire Attack Level (BAL) Report", desc:"Required where bushfire overlay applies. Status: Confirmed / Pending / N/A" },
+    { name:"[1] Acoustic Report", desc:"Required where acoustic overlay or noise source applies. Status: Confirmed / Pending / N/A" },
+    { name:"[1] Acid Sulfate Soils Assessment", desc:"Required in applicable coastal and low-lying areas. Status: Confirmed / Pending / N/A" },
+    { name:"[1] Coastal Management Overlay Check", desc:"Required for sites within coastal management zones. Status: Confirmed / Pending / N/A" },
+    // Section 2 — Council & Planning
+    { name:"[2] Zoning Confirmed", desc:"Confirm zone and any applicable overlays in the planning scheme. Status: Confirmed / Pending / N/A" },
+    { name:"[2] Building Envelope Reviewed", desc:"Maximum buildable area within setbacks and height limits. Status: Confirmed / Pending / N/A" },
+    { name:"[2] Front Setback", desc:"Confirm front setback requirement for this zone. Status: Confirmed / Pending / N/A" },
+    { name:"[2] Side Setbacks", desc:"Confirm side setback requirements for this zone. Status: Confirmed / Pending / N/A" },
+    { name:"[2] Rear Setback", desc:"Confirm rear setback requirement for this zone. Status: Confirmed / Pending / N/A" },
+    { name:"[2] Maximum Site Coverage", desc:"As a percentage of total site area. Status: Confirmed / Pending / N/A" },
+    { name:"[2] Maximum Building Height", desc:"In metres — note any slope-adjusted provisions. Status: Confirmed / Pending / N/A" },
+    { name:"[2] Covenant Review", desc:"Any private covenants affecting design, materials, or height. Status: Confirmed / Pending / N/A" },
+    { name:"[2] Local Area Planning Instrument (LAPI) Review", desc:"Any applicable neighbourhood or local planning policies. Status: Confirmed / Pending / N/A" },
+    { name:"[2] Design & Siting Requirements", desc:"Council-specific design requirements for the zone. Status: Confirmed / Pending / N/A" },
+    { name:"[2] Council Pre-lodgement Advice Required", desc:"Has pre-lodgement advice been sought or confirmed as not required? Status: Confirmed / Pending / N/A" },
+    // Section 3 — Environmental & Overlay Checks
+    { name:"[3] Flood Overlay Applies", desc:"Note overlay type and applicable flood level if known. Status: Yes / No / Unknown" },
+    { name:"[3] Bushfire Overlay Applies", desc:"Note BAL rating if known. Status: Yes / No / Unknown" },
+    { name:"[3] Acoustic Overlay Applies", desc:"Note applicable noise sources. Status: Yes / No / Unknown" },
+    { name:"[3] Acid Sulfate Soils Overlay Applies", desc:"Status: Yes / No / Unknown" },
+    { name:"[3] Coastal Management Overlay Applies", desc:"Status: Yes / No / Unknown" },
+    { name:"[3] Vegetation / Significant Tree Overlay Applies", desc:"Note any trees requiring assessment or protection. Status: Yes / No / Unknown" },
+    { name:"[3] Heritage Overlay Applies", desc:"Status: Yes / No / Unknown" },
+    { name:"[3] Any Other Applicable Overlays", desc:"Detail any additional overlays in notes. Status: Yes / No / Unknown" },
+    // Section 4 — Site Conditions & Orientation
+    { name:"[4] Site Orientation", desc:"Note compass direction and sun path across the site. Photograph required. Status: Confirmed / Pending / N/A" },
+    { name:"[4] Solar Access Assessment", desc:"Identify morning, midday, and afternoon sun exposure. Photograph required. Status: Confirmed / Pending / N/A" },
+    { name:"[4] Prevailing Wind Direction", desc:"Note seasonal variation where relevant. Status: Confirmed / Pending / N/A" },
+    { name:"[4] Slope & Fall Across Building Platform", desc:"Note direction and magnitude of fall in metres. Photograph required. Status: Confirmed / Pending / N/A" },
+    { name:"[4] Views & Outlook", desc:"Note significant views and their direction. Photograph required. Status: Confirmed / Pending / N/A" },
+    { name:"[4] Privacy Considerations", desc:"Identify neighbouring dwellings, windows, and overlooking risk. Photograph required. Status: Confirmed / Pending / N/A" },
+    { name:"[4] Vegetation on Site", desc:"Note significant trees, locations, and likely protection requirements. Photograph required. Status: Confirmed / Pending / N/A" },
+    { name:"[4] Neighbouring Structures", desc:"Note height, proximity, and potential impact on design. Photograph required. Status: Confirmed / Pending / N/A" },
+    { name:"[4] Site Access Points", desc:"Confirm driveway location and any access constraints. Photograph required. Status: Confirmed / Pending / N/A" },
+    { name:"[4] Street & Neighbourhood Character", desc:"Note prevailing style, scale, and materials in the area. Photograph required. Status: Confirmed / Pending / N/A" },
+    { name:"[4] Acoustic Environment", desc:"Note traffic, industry, or other noise sources near the site. Status: Confirmed / Pending / N/A" },
+    // Section 5 — Services & Infrastructure
+    { name:"[5] Sewer Connection Available", desc:"Note location and invert level if known. Photograph required. Status: Yes / No / Unknown" },
+    { name:"[5] Water Connection Available", desc:"Note location of water main and meter position. Photograph required. Status: Yes / No / Unknown" },
+    { name:"[5] Stormwater Drainage Point Available", desc:"Note direction of fall and outlet location. Photograph required. Status: Yes / No / Unknown" },
+    { name:"[5] Underground Power Available", desc:"Note location of existing connection. Photograph required. Status: Yes / No / Unknown" },
+    { name:"[5] NBN / Telecommunications Available", desc:"Note connection type and location. Photograph required. Status: Yes / No / Unknown" },
+    { name:"[5] Easements Affecting Services", desc:"Note any easements that restrict building placement. Status: Yes / No / Unknown" },
+    { name:"[5] Septic / On-site Wastewater Required", desc:"Required for acreage sites without sewer connection. Status: Yes / No / Unknown" },
+    { name:"[5] Water Tank Required", desc:"Required for acreage sites without mains connection. Status: Yes / No / Unknown" },
+    { name:"[5] Service Lead-in Allowances Required", desc:"Note estimated lead-in distances for acreage sites. Status: Yes / No / Unknown" },
+  ];
+
+  const order = Object.keys(checklists).length + 1;
+  await db.collection('checklists').add({
+    label: 'Design Due Diligence',
+    order,
+    items: ddcItems,
+    isDesignDDC: true
+  });
+
+  await loadChecklists();
+  renderAdminChecklists();
+  showToast('✓ Design DDC checklist added');
+}
+
 window.loadAdminJobs=loadAdminJobs; window.openEditJob=openEditJob; window.saveJobEdit=saveJobEdit;
 window.deleteJob=deleteJob; window.manageInspections=manageInspections; window.deleteInspection=deleteInspection;
 window.saveCCEmails=saveCCEmails; window.closeModal=closeModal;
