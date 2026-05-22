@@ -312,13 +312,13 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
   <div class="body">
     <div class="card">
       <div class="card-h">Inspection type</div>
-      <div class="field"><label>Select checklist</label><select id="f-type"></select></div>
+      <div class="field"><label>Select checklist</label><select id="f-type" onchange="onChecklistTypeChange(this.value)"></select></div>
     </div>
     <div class="card">
       <div class="card-h">Personnel</div>
-      <div class="field"><label>Inspector</label><input id="f-ins" type="text" placeholder="e.g. Josh M"></div>
-      <div class="field"><label>Supervisor</label><input id="f-sup" type="text" placeholder="e.g. Brett K"></div>
-      <div class="field"><label>Subcontractor</label><input id="f-sub" type="text" placeholder="e.g. Sunshine Coast Concrete"></div>
+      <div class="field"><label id="f-ins-label">Inspector</label><input id="f-ins" type="text" placeholder="e.g. Josh M"></div>
+      <div id="f-sup-wrap" class="field"><label>Supervisor</label><input id="f-sup" type="text" placeholder="e.g. Brett K"></div>
+      <div id="f-sub-wrap" class="field"><label>Subcontractor</label><input id="f-sub" type="text" placeholder="e.g. Sunshine Coast Concrete"></div>
     </div>
     <button class="primary-btn" onclick="beginInspection()">Begin inspection</button>
     <button class="ghost-btn" onclick="showScreen('screen-job-detail')">Cancel</button>
@@ -2912,6 +2912,12 @@ function beginInspection() {
   const typeId = document.getElementById('f-type').value;
   const cl = checklists[typeId];
   if (!cl) { showToast('Please select a checklist'); return; }
+  // DDC gets its own inspector field label
+  if (cl.isDesignDDC || cl.label === 'Design Due Diligence') {
+    // Relabel inspector field for DDC context
+    const insLabel = document.querySelector('label[for="f-ins"]');
+    // (label may not have for attr — just update the card-h)
+  }
   activeItems = cl.items.map((item,i) => [String(i+1), item.name, item.desc]);
   activeLabel = cl.label;
   // Reset ad hoc counter so defect register starts fresh
@@ -3196,7 +3202,9 @@ function buildSummary() {
       </div>`).join('')}
     </div>`:'';
 
+  const isDDCSummary = currentInspection.type === 'Design Due Diligence';
   document.getElementById('sum-body').innerHTML = `
+    ${isDDCSummary ? `<div style="font-size:10px;font-weight:700;color:#123570;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">Studio Sora</div>` : ''}
     <div style="font-size:22px;font-weight:700;margin-bottom:3px;">${currentInspection.type}</div>
     <div style="font-size:13px;color:#5C5A57;margin-bottom:20px;">${currentJob.address} · ${currentInspection.date}</div>
     <div class="stat-grid">
@@ -3292,6 +3300,25 @@ function buildReportBody() {
 
 async function generateEmail() {
   showLoading('Preparing email…');
+  const isDDC = currentInspection.type === 'Design Due Diligence';
+  const ccEmails = await getCCEmails();
+  const ccStr = ccEmails.length?ccEmails.map(e=>encodeURIComponent(e)).join(','):'';
+  const ccParam = ccStr?`&cc=${ccStr}`:'';
+
+  if (isDDC) {
+    const reportUrl = `https://pacificbluedevelopments.github.io/qa-inspections/ddc.html?job=${currentJob.id}&insp=${currentInspection.id}`;
+    const subj = encodeURIComponent(`Studio Sora – Design Due Diligence – ${currentJob.address} – ${currentInspection.date}`);
+    let body = `Please find the Studio Sora Design Due Diligence Checklist for ${currentJob.address} via the link below.\n\n`;
+    body += `View Report Here:\n${reportUrl}\n\n`;
+    body += `Project: ${currentJob.address}\n`;
+    body += `Date: ${currentInspection.date}\n`;
+    body += `Completed by: ${currentInspection.inspector}\n\n`;
+    body += `Studio Sora — Design Studio of Pacific Blue\nhello@studiosora.com.au`;
+    hideLoading();
+    window.location.href = `mailto:?${ccParam}&subject=${subj}&body=${encodeURIComponent(body)}`;
+    return;
+  }
+
   const {p,f,na,fi,out} = getCounts();
   const verdict = f===0&&out===0?'PASSED':'REQUIRES RECTIFICATION';
   const reportUrl = `https://pacificbluedevelopments.github.io/qa-inspections/report.html?job=${currentJob.id}&insp=${currentInspection.id}`;
@@ -3304,9 +3331,6 @@ async function generateEmail() {
   body += `Inspector: ${currentInspection.inspector}\n`;
   body += `Result: ${verdict}\n\n`;
   body += `Pacific Blue`;
-  const ccEmails = await getCCEmails();
-  const ccStr = ccEmails.length?ccEmails.map(e=>encodeURIComponent(e)).join(','):'';
-  const ccParam = ccStr?`&cc=${ccStr}`:'';
   hideLoading();
   window.location.href = `mailto:?${ccParam}&subject=${subj}&body=${encodeURIComponent(body)}`;
 }
@@ -4406,6 +4430,19 @@ window.openAddChecklist=openAddChecklist; window.saveNewChecklist=saveNewCheckli
 window.deleteChecklist=deleteChecklist; window.openEditChecklist=openEditChecklist;
 window.openAddItem=openAddItem; window.openEditItem=openEditItem;
 window.saveItem=saveItem; window.deleteItem=deleteItem; window.saveChecklist=saveChecklist;
+
+
+// ── DDC TYPE CHANGE ───────────────────────────────────────────────────────
+function onChecklistTypeChange(typeId) {
+  const cl = checklists[typeId];
+  const isDDC = cl && (cl.isDesignDDC || cl.label === 'Design Due Diligence');
+  const insLabel = document.getElementById('f-ins-label');
+  const supWrap = document.getElementById('f-sup-wrap');
+  const subWrap = document.getElementById('f-sub-wrap');
+  if (insLabel) insLabel.textContent = isDDC ? 'Completed by' : 'Inspector';
+  if (supWrap) supWrap.style.display = isDDC ? 'none' : '';
+  if (subWrap) subWrap.style.display = isDDC ? 'none' : '';
+}
 
 // ── DESIGN DDC SEED ───────────────────────────────────────────────────────
 async function seedDesignDDC() {
