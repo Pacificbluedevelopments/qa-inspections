@@ -312,13 +312,13 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
   <div class="body">
     <div class="card">
       <div class="card-h">Inspection type</div>
-      <div class="field"><label>Select checklist</label><select id="f-type" onchange="onChecklistTypeChange(this.value)"></select></div>
+      <div class="field"><label>Select checklist</label><select id="f-type"></select></div>
     </div>
     <div class="card">
       <div class="card-h">Personnel</div>
-      <div class="field"><label id="f-ins-label">Inspector</label><input id="f-ins" type="text" placeholder="e.g. Josh M"></div>
-      <div id="f-sup-wrap" class="field"><label>Supervisor</label><input id="f-sup" type="text" placeholder="e.g. Brett K"></div>
-      <div id="f-sub-wrap" class="field"><label>Subcontractor</label><input id="f-sub" type="text" placeholder="e.g. Sunshine Coast Concrete"></div>
+      <div class="field"><label>Inspector</label><input id="f-ins" type="text" placeholder="e.g. Josh M"></div>
+      <div class="field"><label>Supervisor</label><input id="f-sup" type="text" placeholder="e.g. Brett K"></div>
+      <div class="field"><label>Subcontractor</label><input id="f-sub" type="text" placeholder="e.g. Sunshine Coast Concrete"></div>
     </div>
     <button class="primary-btn" onclick="beginInspection()">Begin inspection</button>
     <button class="ghost-btn" onclick="showScreen('screen-job-detail')">Cancel</button>
@@ -578,11 +578,6 @@ body{font-family:'Poppins',-apple-system,sans-serif;background:#F7F6F4;color:#1A
         <div class="field" style="margin-bottom:14px;"><label>CC 3</label><input id="cc-email-3" type="email" inputmode="email" placeholder="Optional"></div>
         <button class="primary-btn" style="margin-bottom:0;" onclick="saveCCEmails()">Save CC emails</button>
       </div>
-      <div style="background:#EFF3F8;border:1.5px solid #C5D0E0;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
-        <div style="font-size:13px;font-weight:700;color:#123570;margin-bottom:3px;">Studio Sora — Design DDC</div>
-        <div style="font-size:12px;color:#5C5A57;margin-bottom:10px;line-height:1.5;">Adds the Studio Sora Design Due Diligence Checklist to the inspection list. Only needs to be done once.</div>
-        <button class="primary-btn" style="margin-bottom:0;background:#123570;" onclick="seedDesignDDC()">Add Design DDC checklist</button>
-      </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
         <div style="font-size:14px;font-weight:700;color:#333F48;">Checklists</div>
         <button class="add-item-btn" onclick="openAddChecklist()">+ New checklist</button>
@@ -707,7 +702,6 @@ const LOGO = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwU
 let currentUser = null;
 let currentJob = null;
 let currentInspection = null;
-const DRAFT_KEY = () => `pb_inspection_draft_${currentUser?.uid || 'anon'}`;
 let checklists = {};
 let editingChecklistId = null;
 let editingItemIdx = null;
@@ -722,7 +716,7 @@ auth.onAuthStateChanged(user => {
   if (user) {
     currentUser = user;
     showScreen('screen-setup');
-    seedDefaultChecklists().then(() => loadChecklists().then(() => checkForDraft()));
+    seedDefaultChecklists().then(() => loadChecklists());
   } else {
     currentUser = null;
     showScreen('screen-login');
@@ -2912,12 +2906,6 @@ function beginInspection() {
   const typeId = document.getElementById('f-type').value;
   const cl = checklists[typeId];
   if (!cl) { showToast('Please select a checklist'); return; }
-  // DDC gets its own inspector field label
-  if (cl.isDesignDDC || cl.label === 'Design Due Diligence') {
-    // Relabel inspector field for DDC context
-    const insLabel = document.querySelector('label[for="f-ins"]');
-    // (label may not have for attr — just update the card-h)
-  }
   activeItems = cl.items.map((item,i) => [String(i+1), item.name, item.desc]);
   activeLabel = cl.label;
   // Reset ad hoc counter so defect register starts fresh
@@ -3028,7 +3016,7 @@ function buildChecklist() {
         <button class="rbtn" onclick="setResult('${num}','NA',this)">— N/A</button>
       </div>
       <label class="note-label">Notes</label>
-      <textarea class="note-field" id="note-${num}" placeholder="Add notes for this item…" oninput="notes['${num}']=this.value; autoSaveDraft()"></textarea>
+      <textarea class="note-field" id="note-${num}" placeholder="Add notes for this item…" oninput="notes['${num}']=this.value"></textarea>
       <label class="note-label">Photos</label>
       <div class="photos-row" id="photos-${num}"></div>
       <label class="photo-label-btn">📷 Add photo<input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="handlePhotos('${num}',this)"></label>
@@ -3046,7 +3034,6 @@ function setResult(num, val, btn) {
   card.querySelectorAll('.rbtn').forEach(b=>b.classList.remove('sel-pass','sel-fail','sel-na'));
   btn.classList.add(val==='PASS'?'sel-pass':val==='FAIL'?'sel-fail':'sel-na');
   updateProgress();
-  autoSaveDraft();
 }
 
 async function handlePhotos(num, input) {
@@ -3065,7 +3052,6 @@ async function handlePhotos(num, input) {
     row.appendChild(wrap);
   }
   input.value = '';
-  autoSaveDraft();
 }
 
 function removePhoto(num, idx) {
@@ -3073,7 +3059,6 @@ function removePhoto(num, idx) {
   if (photoFiles[num]) photoFiles[num][idx] = null;
   const wrap = document.getElementById('thumb-'+num+'-'+idx);
   if (wrap) wrap.remove();
-  autoSaveDraft();
 }
 
 function updateProgress() {
@@ -3112,13 +3097,18 @@ async function goSummary() {
           await ref.putString(item.dataUrl, 'data_url');
           photoURLs[num][i] = await ref.getDownloadURL();
         } catch(e) {
-          photoURLs[num][i] = item.dataUrl;
+          photoURLs[num][i] = null;
+          console.error('Photo upload failed:', e);
+          if (!window._photoUploadFailed) window._photoUploadFailed = 0;
+          window._photoUploadFailed++;
         }
       })());
     });
   }
+  window._photoUploadFailed = 0;
   await Promise.all(uploadTasks);
   Object.keys(photoURLs).forEach(k => { photoURLs[k] = photoURLs[k].filter(Boolean); });
+  const failedCount = window._photoUploadFailed || 0;
 
     // Update ad hoc item names/descs before saving
   activeItems = activeItems.map(([num, name, desc]) => {
@@ -3178,15 +3168,18 @@ async function goSummary() {
     }
 
     hideLoading();
-    showToast('Inspection saved ✓');
-    clearDraft();
+    if (failedCount > 0) {
+      showToast('⚠️ ' + failedCount + ' photo' + (failedCount > 1 ? 's' : '') + ' failed to upload — please retake and save again', 6000);
+    } else {
+      showToast('Inspection saved ✓');
+    }
   } catch(e) { hideLoading(); showToast('Could not save — check connection'); }
 
-  buildSummary();
+  buildSummary(failedCount);
   showScreen('screen-sum');
 }
 
-function buildSummary() {
+function buildSummary(photoFailCount) {
   const {p,f,na,fi,out} = getCounts();
   const allPass = f===0&&out===0;
   const vClass = allPass?'vpass':'vfail';
@@ -3202,9 +3195,17 @@ function buildSummary() {
       </div>`).join('')}
     </div>`:'';
 
-  const isDDCSummary = currentInspection.type === 'Design Due Diligence';
+  const photoWarnHtml = photoFailCount ? `
+    <div style="background:#FEF3CD;border:1px solid #E6A817;border-radius:8px;padding:12px 14px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start;">
+      <div style="font-size:18px;line-height:1;">⚠️</div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#7A4E00;margin-bottom:2px;">${photoFailCount} photo${photoFailCount>1?'s':''} failed to upload</div>
+        <div style="font-size:12px;color:#7A4E00;line-height:1.5;">Photos could not be saved to the server. Please go back into this inspection, retake the photos and save again.</div>
+      </div>
+    </div>` : '';
+
   document.getElementById('sum-body').innerHTML = `
-    ${isDDCSummary ? `<div style="font-size:10px;font-weight:700;color:#123570;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">Studio Sora</div>` : ''}
+    ${photoWarnHtml}
     <div style="font-size:22px;font-weight:700;margin-bottom:3px;">${currentInspection.type}</div>
     <div style="font-size:13px;color:#5C5A57;margin-bottom:20px;">${currentJob.address} · ${currentInspection.date}</div>
     <div class="stat-grid">
@@ -3255,12 +3256,6 @@ function buildReportBody() {
       </div>
       <div style="font-size:12px;color:#5C5A57;line-height:1.55;${nt||ph.length?'margin-bottom:8px':''}">${rq}</div>
       ${nt?`<div style="font-size:12px;color:#333;background:#F7F6F4;padding:8px 10px;border-radius:6px;border-left:3px solid #B7B09C;${ph.length?'margin-bottom:8px':''}">${nt}</div>`:''}
-      ${ph.length?`<div style="background:#F7F6F4;border-radius:6px;padding:8px 12px;font-size:12px;color:#9A9690;margin-top:4px;">📷 ${ph.length} photo${ph.length>1?'s':''} — visible in the report link</div>`:''}">${rq}</div>
-      ${nt?`<div style="font-size:12px;color:#333;background:#F7F6F4;padding:8px 10px;border-radius:6px;border-left:3px solid #B7B09C;${ph.length?'margin-bottom:8px':''}">${nt}</div>`:''}
-      ${ph.length?`<div style="font-size:12px;color:#9A9690;background:#F7F6F4;padding:6px 10px;border-radius:6px;margin-top:4px;">📷 ${ph.length} photo${ph.length>1?'s':''} — visible in the report link</div>`:''}">${rq}</div>
-      ${nt?`<div style="font-size:12px;color:#333;background:#F7F6F4;padding:8px 10px;border-radius:6px;border-left:3px solid #B7B09C;${ph.length?'margin-bottom:8px':''}">${nt}</div>`:''}
-      ${ph.length?`<div style="background:#F7F6F4;border-radius:6px;padding:8px 12px;font-size:12px;color:#9A9690;margin-top:4px;">📷 ${ph.length} photo${ph.length>1?'s':''} — visible in the report link</div>`:''}">${rq}</div>
-      ${nt?`<div style="font-size:12px;color:#333;background:#F7F6F4;padding:8px 10px;border-radius:6px;border-left:3px solid #B7B09C;${ph.length?'margin-bottom:8px':''}">${nt}</div>`:''}
       ${ph.length?`<div style="font-size:12px;color:#9A9690;background:#F7F6F4;padding:6px 10px;border-radius:6px;margin-top:4px;">📷 ${ph.length} photo${ph.length>1?'s':''} — visible in the report link</div>`:''}
     </div>`;
   });
@@ -3300,25 +3295,6 @@ function buildReportBody() {
 
 async function generateEmail() {
   showLoading('Preparing email…');
-  const isDDC = currentInspection.type === 'Design Due Diligence';
-  const ccEmails = await getCCEmails();
-  const ccStr = ccEmails.length?ccEmails.map(e=>encodeURIComponent(e)).join(','):'';
-  const ccParam = ccStr?`&cc=${ccStr}`:'';
-
-  if (isDDC) {
-    const reportUrl = `https://pacificbluedevelopments.github.io/qa-inspections/ddc.html?job=${currentJob.id}&insp=${currentInspection.id}`;
-    const subj = encodeURIComponent(`Studio Sora – Design Due Diligence – ${currentJob.address} – ${currentInspection.date}`);
-    let body = `Please find the Studio Sora Design Due Diligence Checklist for ${currentJob.address} via the link below.\n\n`;
-    body += `View Report Here:\n${reportUrl}\n\n`;
-    body += `Project: ${currentJob.address}\n`;
-    body += `Date: ${currentInspection.date}\n`;
-    body += `Completed by: ${currentInspection.inspector}\n\n`;
-    body += `Studio Sora — Design Studio of Pacific Blue\nhello@studiosora.com.au`;
-    hideLoading();
-    window.location.href = `mailto:?${ccParam}&subject=${subj}&body=${encodeURIComponent(body)}`;
-    return;
-  }
-
   const {p,f,na,fi,out} = getCounts();
   const verdict = f===0&&out===0?'PASSED':'REQUIRES RECTIFICATION';
   const reportUrl = `https://pacificbluedevelopments.github.io/qa-inspections/report.html?job=${currentJob.id}&insp=${currentInspection.id}`;
@@ -3331,6 +3307,9 @@ async function generateEmail() {
   body += `Inspector: ${currentInspection.inspector}\n`;
   body += `Result: ${verdict}\n\n`;
   body += `Pacific Blue`;
+  const ccEmails = await getCCEmails();
+  const ccStr = ccEmails.length?ccEmails.map(e=>encodeURIComponent(e)).join(','):'';
+  const ccParam = ccStr?`&cc=${ccStr}`:'';
   hideLoading();
   window.location.href = `mailto:?${ccParam}&subject=${subj}&body=${encodeURIComponent(body)}`;
 }
@@ -4069,7 +4048,7 @@ function openAdHocItem() {
       <button class="rbtn" onclick="setResult('${num}','NA',this)">— N/A</button>
     </div>
     <label class="note-label">Notes</label>
-    <textarea class="note-field" id="note-${num}" placeholder="Add notes…" oninput="notes['${num}']=this.value; autoSaveDraft()"></textarea>
+    <textarea class="note-field" id="note-${num}" placeholder="Add notes…" oninput="notes['${num}']=this.value"></textarea>
     <label class="note-label">Photos</label>
     <div class="photos-row" id="photos-${num}"></div>
     <label class="photo-label-btn">📷 Add photo<input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="handlePhotos('${num}',this)"></label>
@@ -4080,10 +4059,9 @@ function openAdHocItem() {
   if (!currentInspection) currentInspection = {};
   currentInspection.totalItems = activeItems.length;
   div.scrollIntoView({ behavior:'smooth' });
-  autoSaveDraft();
 }
 
-let adHocNames = {}, adHocDescs = {};
+const adHocNames = {}, adHocDescs = {};
 function updateAdHocName(num, val) { adHocNames[num] = val; }
 function updateAdHocDesc(num, val) { adHocDescs[num] = val; }
 
@@ -4388,7 +4366,7 @@ function goBackToSummary() {
 
 function confirmHome() {
   if(Object.keys(results).length===0){ showScreen('screen-setup'); return; }
-  if(confirm('Return to home? Your progress will be lost.')){ results={}; notes={}; photos={}; photoFiles={}; clearDraft(); showScreen('screen-setup'); }
+  if(confirm('Return to home? Your progress will be lost.')){ results={}; notes={}; photos={}; photoFiles={}; showScreen('screen-setup'); }
 }
 
 function showScreen(id) {
@@ -4409,10 +4387,10 @@ function hideLoading() {
   document.getElementById('loading-overlay').classList.remove('show');
 }
 
-function showToast(msg) {
+function showToast(msg, duration) {
   const t=document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2800);
+  setTimeout(()=>t.classList.remove('show'), duration||2800);
 }
 
 // Expose globals
@@ -4430,96 +4408,6 @@ window.openAddChecklist=openAddChecklist; window.saveNewChecklist=saveNewCheckli
 window.deleteChecklist=deleteChecklist; window.openEditChecklist=openEditChecklist;
 window.openAddItem=openAddItem; window.openEditItem=openEditItem;
 window.saveItem=saveItem; window.deleteItem=deleteItem; window.saveChecklist=saveChecklist;
-
-
-// ── DDC TYPE CHANGE ───────────────────────────────────────────────────────
-function onChecklistTypeChange(typeId) {
-  const cl = checklists[typeId];
-  const isDDC = cl && (cl.isDesignDDC || cl.label === 'Design Due Diligence');
-  const insLabel = document.getElementById('f-ins-label');
-  const supWrap = document.getElementById('f-sup-wrap');
-  const subWrap = document.getElementById('f-sub-wrap');
-  if (insLabel) insLabel.textContent = isDDC ? 'Completed by' : 'Inspector';
-  if (supWrap) supWrap.style.display = isDDC ? 'none' : '';
-  if (subWrap) subWrap.style.display = isDDC ? 'none' : '';
-}
-
-// ── DESIGN DDC SEED ───────────────────────────────────────────────────────
-async function seedDesignDDC() {
-  // Check if it already exists
-  const snap = await db.collection('checklists').where('label','==','Design Due Diligence').get();
-  if (!snap.empty) { showToast('Design DDC already exists'); return; }
-
-  const ddcItems = [
-    // Section 1 — Site Documentation
-    { name:"[1] Contour / Survey Plan", desc:"Confirms site levels and fall across the building platform. Status: Confirmed / Pending / N/A" },
-    { name:"[1] Title Search", desc:"Confirms ownership, boundaries, and registered interests. Status: Confirmed / Pending / N/A" },
-    { name:"[1] Flood Disclosure Report", desc:"Identifies flood risk and applicable overlays. Status: Confirmed / Pending / N/A" },
-    { name:"[1] Site Classification Report", desc:"Soil classification relevant to slab and footing design. Status: Confirmed / Pending / N/A" },
-    { name:"[1] Easements Identified", desc:"All registered easements shown on title and survey. Status: Confirmed / Pending / N/A" },
-    { name:"[1] Slope Stability Assessment", desc:"Required for steep or complex sites. Status: Confirmed / Pending / N/A" },
-    { name:"[1] Bushfire Attack Level (BAL) Report", desc:"Required where bushfire overlay applies. Status: Confirmed / Pending / N/A" },
-    { name:"[1] Acoustic Report", desc:"Required where acoustic overlay or noise source applies. Status: Confirmed / Pending / N/A" },
-    { name:"[1] Acid Sulfate Soils Assessment", desc:"Required in applicable coastal and low-lying areas. Status: Confirmed / Pending / N/A" },
-    { name:"[1] Coastal Management Overlay Check", desc:"Required for sites within coastal management zones. Status: Confirmed / Pending / N/A" },
-    // Section 2 — Council & Planning
-    { name:"[2] Zoning Confirmed", desc:"Confirm zone and any applicable overlays in the planning scheme. Status: Confirmed / Pending / N/A" },
-    { name:"[2] Building Envelope Reviewed", desc:"Maximum buildable area within setbacks and height limits. Status: Confirmed / Pending / N/A" },
-    { name:"[2] Front Setback", desc:"Confirm front setback requirement for this zone. Status: Confirmed / Pending / N/A" },
-    { name:"[2] Side Setbacks", desc:"Confirm side setback requirements for this zone. Status: Confirmed / Pending / N/A" },
-    { name:"[2] Rear Setback", desc:"Confirm rear setback requirement for this zone. Status: Confirmed / Pending / N/A" },
-    { name:"[2] Maximum Site Coverage", desc:"As a percentage of total site area. Status: Confirmed / Pending / N/A" },
-    { name:"[2] Maximum Building Height", desc:"In metres — note any slope-adjusted provisions. Status: Confirmed / Pending / N/A" },
-    { name:"[2] Covenant Review", desc:"Any private covenants affecting design, materials, or height. Status: Confirmed / Pending / N/A" },
-    { name:"[2] Local Area Planning Instrument (LAPI) Review", desc:"Any applicable neighbourhood or local planning policies. Status: Confirmed / Pending / N/A" },
-    { name:"[2] Design & Siting Requirements", desc:"Council-specific design requirements for the zone. Status: Confirmed / Pending / N/A" },
-    { name:"[2] Council Pre-lodgement Advice Required", desc:"Has pre-lodgement advice been sought or confirmed as not required? Status: Confirmed / Pending / N/A" },
-    // Section 3 — Environmental & Overlay Checks
-    { name:"[3] Flood Overlay Applies", desc:"Note overlay type and applicable flood level if known. Status: Yes / No / Unknown" },
-    { name:"[3] Bushfire Overlay Applies", desc:"Note BAL rating if known. Status: Yes / No / Unknown" },
-    { name:"[3] Acoustic Overlay Applies", desc:"Note applicable noise sources. Status: Yes / No / Unknown" },
-    { name:"[3] Acid Sulfate Soils Overlay Applies", desc:"Status: Yes / No / Unknown" },
-    { name:"[3] Coastal Management Overlay Applies", desc:"Status: Yes / No / Unknown" },
-    { name:"[3] Vegetation / Significant Tree Overlay Applies", desc:"Note any trees requiring assessment or protection. Status: Yes / No / Unknown" },
-    { name:"[3] Heritage Overlay Applies", desc:"Status: Yes / No / Unknown" },
-    { name:"[3] Any Other Applicable Overlays", desc:"Detail any additional overlays in notes. Status: Yes / No / Unknown" },
-    // Section 4 — Site Conditions & Orientation
-    { name:"[4] Site Orientation", desc:"Note compass direction and sun path across the site. Photograph required. Status: Confirmed / Pending / N/A" },
-    { name:"[4] Solar Access Assessment", desc:"Identify morning, midday, and afternoon sun exposure. Photograph required. Status: Confirmed / Pending / N/A" },
-    { name:"[4] Prevailing Wind Direction", desc:"Note seasonal variation where relevant. Status: Confirmed / Pending / N/A" },
-    { name:"[4] Slope & Fall Across Building Platform", desc:"Note direction and magnitude of fall in metres. Photograph required. Status: Confirmed / Pending / N/A" },
-    { name:"[4] Views & Outlook", desc:"Note significant views and their direction. Photograph required. Status: Confirmed / Pending / N/A" },
-    { name:"[4] Privacy Considerations", desc:"Identify neighbouring dwellings, windows, and overlooking risk. Photograph required. Status: Confirmed / Pending / N/A" },
-    { name:"[4] Vegetation on Site", desc:"Note significant trees, locations, and likely protection requirements. Photograph required. Status: Confirmed / Pending / N/A" },
-    { name:"[4] Neighbouring Structures", desc:"Note height, proximity, and potential impact on design. Photograph required. Status: Confirmed / Pending / N/A" },
-    { name:"[4] Site Access Points", desc:"Confirm driveway location and any access constraints. Photograph required. Status: Confirmed / Pending / N/A" },
-    { name:"[4] Street & Neighbourhood Character", desc:"Note prevailing style, scale, and materials in the area. Photograph required. Status: Confirmed / Pending / N/A" },
-    { name:"[4] Acoustic Environment", desc:"Note traffic, industry, or other noise sources near the site. Status: Confirmed / Pending / N/A" },
-    // Section 5 — Services & Infrastructure
-    { name:"[5] Sewer Connection Available", desc:"Note location and invert level if known. Photograph required. Status: Yes / No / Unknown" },
-    { name:"[5] Water Connection Available", desc:"Note location of water main and meter position. Photograph required. Status: Yes / No / Unknown" },
-    { name:"[5] Stormwater Drainage Point Available", desc:"Note direction of fall and outlet location. Photograph required. Status: Yes / No / Unknown" },
-    { name:"[5] Underground Power Available", desc:"Note location of existing connection. Photograph required. Status: Yes / No / Unknown" },
-    { name:"[5] NBN / Telecommunications Available", desc:"Note connection type and location. Photograph required. Status: Yes / No / Unknown" },
-    { name:"[5] Easements Affecting Services", desc:"Note any easements that restrict building placement. Status: Yes / No / Unknown" },
-    { name:"[5] Septic / On-site Wastewater Required", desc:"Required for acreage sites without sewer connection. Status: Yes / No / Unknown" },
-    { name:"[5] Water Tank Required", desc:"Required for acreage sites without mains connection. Status: Yes / No / Unknown" },
-    { name:"[5] Service Lead-in Allowances Required", desc:"Note estimated lead-in distances for acreage sites. Status: Yes / No / Unknown" },
-  ];
-
-  const order = Object.keys(checklists).length + 1;
-  await db.collection('checklists').add({
-    label: 'Design Due Diligence',
-    order,
-    items: ddcItems,
-    isDesignDDC: true
-  });
-
-  await loadChecklists();
-  renderAdminChecklists();
-  showToast('✓ Design DDC checklist added');
-}
-
 window.loadAdminJobs=loadAdminJobs; window.openEditJob=openEditJob; window.saveJobEdit=saveJobEdit;
 window.deleteJob=deleteJob; window.manageInspections=manageInspections; window.deleteInspection=deleteInspection;
 window.saveCCEmails=saveCCEmails; window.closeModal=closeModal;
@@ -4558,119 +4446,6 @@ window.addPCLine=addPCLine;
 window.updatePCLines=updatePCLines;
 window.loadPCCertificates=loadPCCertificates;
 window.openPCCertificate=openPCCertificate;
-
-// ── Draft auto-save (localStorage) ───────────────────────────────────────────
-function autoSaveDraft() {
-  if (!currentInspection || !currentJob) return;
-  try {
-    const draft = {
-      currentJob: { id: currentJob.id, address: currentJob.address, jobNumber: currentJob.jobNumber, client: currentJob.client || '' },
-      currentInspection,
-      activeItems,
-      activeLabel,
-      results,
-      notes,
-      photos,          // base64 data URLs — survives offline
-      adHocItemCount: adHocItemCount || 0,
-      adHocNames: adHocNames || {},
-      adHocDescs: adHocDescs || {},
-      savedAt: new Date().toISOString(),
-    };
-    try {
-      localStorage.setItem(DRAFT_KEY(), JSON.stringify(draft));
-      console.log('Draft saved OK for user', currentUser?.uid);
-    } catch(e) {
-      // Storage full — retry without photos (results and notes always saved)
-      draft.photos = {};
-      draft.photosDropped = true;
-      localStorage.setItem(DRAFT_KEY(), JSON.stringify(draft));
-      console.log('Draft saved without photos (storage limit hit)');
-    }
-  } catch(e) {
-    console.warn('Draft save failed:', e);
-  }
-}
-
-function clearDraft() {
-  localStorage.removeItem(DRAFT_KEY());
-}
-
-function checkForDraft() {
-  try {
-    const raw = localStorage.getItem(DRAFT_KEY());
-    if (!raw) { console.log('checkForDraft: no draft found for key', DRAFT_KEY()); return; }
-    const draft = JSON.parse(raw);
-    if (!draft || !draft.currentInspection || !draft.currentJob) return;
-    console.log('checkForDraft: draft found', draft);
-
-    const itemsDone = Object.keys(draft.results || {}).length;
-    const itemsTotal = (draft.activeItems || []).length;
-    const savedTime = draft.savedAt ? new Date(draft.savedAt).toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit' }) : 'earlier';
-    const savedDate = draft.savedAt ? new Date(draft.savedAt).toLocaleDateString('en-AU', { day:'2-digit', month:'short' }) : '';
-    const photoNote = draft.photosDropped ? '\n(Note: photos could not be saved to draft due to device storage limits)' : '';
-
-    const msg = `Unsaved inspection found:\n\n${draft.currentInspection.type}\n${draft.currentJob.address}\n${itemsDone} of ${itemsTotal} items done (saved ${savedDate} at ${savedTime})${photoNote}\n\nResume this inspection?`;
-    if (!confirm(msg)) {
-      clearDraft();
-      return;
-    }
-
-    console.log('Restoring draft — step 1: setting state vars');
-    // Restore all state
-    currentJob = draft.currentJob;
-    currentInspection = draft.currentInspection;
-    activeItems = draft.activeItems || [];
-    activeLabel = draft.activeLabel || draft.currentInspection.type;
-    results = draft.results || {};
-    notes = draft.notes || {};
-    photos = draft.photos || {};
-    photoFiles = {};
-    adHocItemCount = draft.adHocItemCount || 0;
-    if (typeof adHocNames !== 'undefined') adHocNames = draft.adHocNames || {};
-    if (typeof adHocDescs !== 'undefined') adHocDescs = draft.adHocDescs || {};
-
-    console.log('Restoring draft — step 2: showScreen');
-    showScreen('screen-check');
-
-    console.log('Restoring draft — step 3: buildChecklist, activeItems=', activeItems.length);
-    buildChecklist();
-
-    // Restore result button states visually
-    Object.entries(results).forEach(([num, val]) => {
-      const card = document.getElementById('card-' + num);
-      if (!card) return;
-      card.className = 'icard' + (val === 'PASS' ? ' is-pass' : val === 'FAIL' ? ' is-fail' : ' is-na');
-      const btnIndex = val === 'PASS' ? 1 : val === 'FAIL' ? 2 : 3;
-      const btn = card.querySelector('.rbtn:nth-child(' + btnIndex + ')');
-      if (btn) btn.classList.add(val === 'PASS' ? 'sel-pass' : val === 'FAIL' ? 'sel-fail' : 'sel-na');
-    });
-
-    // Restore notes
-    Object.entries(notes).forEach(([num, note]) => {
-      const el = document.getElementById('note-' + num);
-      if (el) el.value = note;
-    });
-
-    // Restore photo thumbnails
-    Object.entries(photos).forEach(([num, photoList]) => {
-      if (!photoList || !photoList.length) return;
-      const row = document.getElementById('photos-' + num);
-      if (!row) return;
-      photoList.filter(Boolean).forEach((src, idx) => {
-        const wrap = document.createElement('div');
-        wrap.className = 'thumb-wrap';
-        wrap.innerHTML = `<img class="thumb" src="${src}"><button class="thumb-del" onclick="removePhoto('${num}',${idx})">×</button>`;
-        row.appendChild(wrap);
-      });
-    });
-
-    console.log('Restoring draft — step 4: all done');
-    showToast('Draft restored — ' + itemsDone + ' of ' + itemsTotal + ' items done');
-  } catch(e) {
-    console.warn('Draft restore failed:', e);
-    clearDraft();
-  }
-}
 </script>
 </body>
 </html>
